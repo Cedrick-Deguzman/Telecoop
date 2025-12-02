@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model client {
+  id               Int       @id @default(autoincrement())
+  name             String
+  accountNumber    String    @unique
+  phone            String?
+  email            String?
+  installationDate DateTime
+  plan             String
+  status           String
+  monthlyFee       Float
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  payment          payment[]
+}
+
+model payment {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  amount    Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  client    client   @relation(fields: [clientId], references: [id])
+
+  @@index([clientId], map: "Payment_clientId_idx")
+}
