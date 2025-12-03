@@ -7,6 +7,9 @@ import {
   Mail,
   Phone,
   Wifi,
+  Zap,
+  Crown,
+  Rocket
 } from "lucide-react";
 
 interface Client {
@@ -14,17 +17,28 @@ interface Client {
   name: string;
   email: string;
   phone: string;
-  plan: string;
+  plan: {
+    name: string;
+    icon: string;
+    color: string;
+  };
   status: "active" | "inactive" | "suspended";
   installationDate: string;
   monthlyFee: number;
   payments: { date: string }[];
 }
 
+interface Plan {
+  id: number;
+  name: string;
+}
+
 export function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [clientPlans, setClientPlans] = useState<Record<number, Plan>>({});
 
   // --------------------------------------------------
   // Filter clients by search input
@@ -47,8 +61,20 @@ export function Clients() {
       console.error("Failed to load clients:", err);
     }
   };
+
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch("/api/plans");
+      const data = await res.json();
+      setPlans(data);
+    } catch (err) {
+      console.error("Failed to load plans:", err);
+    }
+  };
+  
   useEffect(() => {
     fetchClients();
+    fetchPlans();
   }, []);
 
   // --------------------------------------------------
@@ -70,6 +96,13 @@ export function Clients() {
     return client.payments?.length > 0
       ? new Date(client.payments[0].date).toLocaleDateString()
       : "No payments";
+  };
+
+  const planIcons: Record<string, React.ElementType> = {
+    "wifi": Wifi,
+    "zap": Zap,
+    "crown": Crown,
+    "rocket": Rocket,
   };
 
   return (
@@ -152,8 +185,11 @@ export function Clients() {
 
                   {/* Plan */}
                   <td className="mt-2 px-6 py-4 flex items-center gap-2">
-                    <Wifi size={20} className="text-indigo-600" />
-                    {client.plan}
+                    {client.plan?.icon && (() => {
+                      const Icon = planIcons[client.plan.icon];
+                      return <Icon size={20} className={`text-${client.plan.color}-600`} />;
+                    })()}
+                    {client.plan?.name || "N/A"}
                   </td>
 
                   {/* Status */}
@@ -164,7 +200,7 @@ export function Clients() {
                   </td>
 
                   {/* Fee */}
-                  <td className="px-6 py-4">${client.monthlyFee.toFixed(2)}</td>
+                  <td className="px-6 py-4">₱{client.monthlyFee.toFixed(2)}</td>
 
                   {/* Last Payment */}
                   <td className="px-6 py-4 text-sm text-gray-500">
@@ -189,7 +225,7 @@ export function Clients() {
       {/* -------------------------------------------- */}
       {/* Add Client Modal */}
       {/* -------------------------------------------- */}
-      {showAddModal && <AddClientModal onClose={() => setShowAddModal(false)} refresh={fetchClients} />}
+      {showAddModal && <AddClientModal onClose={() => setShowAddModal(false)} refresh={fetchClients} plans={plans} />}
     </div>
   );
 }
@@ -219,7 +255,7 @@ function ActionButton({ icon, color }: { icon: React.ReactNode; color: string })
 /* Modal Component                              */
 /* -------------------------------------------- */
 
-function AddClientModal({ onClose, refresh }: { onClose: () => void; refresh : () => void }) {
+function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refresh : () => void; plans: Plan[] }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -229,20 +265,27 @@ function AddClientModal({ onClose, refresh }: { onClose: () => void; refresh : (
       name: form.get("name")?.toString().trim(),
       email: form.get("email")?.toString().trim(),
       phone: form.get("phone")?.toString().trim(),
-      plan: form.get("plan")?.toString(),
+      // planName: form.get("planName")?.toString(),
+      planId: Number(form.get("planId")),
       installationDate: form.get("installationDate")?.toString(),
     };
 
-    if (!payload.name || !payload.plan || !payload.installationDate) {
+    if (!payload.name || !payload.planId || !payload.installationDate) {
       alert("Name, plan, and installation date are required");
       return;
     }
 
     try {
+      const plan = plans.find((p) => p.id === payload.planId);
+      if (!plan) throw new Error("Selected plan not found");
+
       const res = await fetch("/api/clients/add-client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          planName: plan.name, // send name for your API
+        }),
       });
 
       const data = await res.json();
@@ -270,14 +313,9 @@ function AddClientModal({ onClose, refresh }: { onClose: () => void; refresh : (
           <FormInput label="Phone" name="phone" type="tel" />
           <FormSelect
             label="Plan"
-            name="plan"
+            name="planId"
             required
-            options={[
-              "Basic 50Mbps - $49.99",
-              "Standard 100Mbps - $79.99",
-              "Premium 500Mbps - $129.99",
-              "Ultra 1Gbps - $199.99",
-            ]}
+            options={plans.map((p) => ({ value: p.id, label: p.name }))}
           />
           <FormInput label="Installation Date" name="installationDate" type="date" required />
 
@@ -332,7 +370,7 @@ function FormSelect({
   label: string;
   name: string;
   required?: boolean;
-  options: string[];
+  options: { value: number; label: string }[];
 }) {
   return (
     <div>
@@ -344,7 +382,7 @@ function FormSelect({
       >
         <option value="">Select Plan</option>
         {options.map((opt) => (
-          <option key={opt}>{opt}</option>
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
     </div>

@@ -6,19 +6,33 @@ datasource db {
   provider = "mysql"
 }
 
+model Plan {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  speed     String
+  price     Float
+  color     String
+  features  Json
+  icon      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clients   client[] @relation("PlanClients")
+}
+
 model client {
-  id               Int       @id @default(autoincrement())
-  name             String
-  accountNumber    String    @unique
-  phone            String?
-  email            String?
+  id            Int       @id @default(autoincrement())
+  name          String
+  accountNumber String    @unique
+  phone         String?
+  email         String?
   installationDate DateTime
-  plan             String
-  status           String
-  monthlyFee       Float
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime
-  payment          payment[]
+  planId        Int?
+  plan          Plan?     @relation("PlanClients", fields: [planId], references: [id])
+  status        String
+  monthlyFee    Float
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  payment       payment[]
 }
 
 model payment {

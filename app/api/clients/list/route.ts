@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const clients = await prisma.client.findMany({
       include: {
+        plan: true,
         payment: {
           orderBy: { date: "desc" },
           take: 1,

@@ -12,94 +12,85 @@ export async function GET() {
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const lastMonthClients = await prisma.client.count({
-      where: { installationDate: { gte: startOfLastMonth, lte: endOfLastMonth } },
+      where: {
+        installationDate: { gte: startOfLastMonth, lte: endOfLastMonth },
+      },
     });
 
-    // Monthly change for clients
     const monthlyChangeClients =
-     lastMonthClients === 0
-      ? totalClients === 0
-        ? 0   // nothing changed
-        : 100 // last month 0, this month > 0
-      : ((totalClients - lastMonthClients) / lastMonthClients) * 100;
+      lastMonthClients === 0
+        ? totalClients === 0
+          ? 0
+          : 100
+        : ((totalClients - lastMonthClients) / lastMonthClients) * 100;
 
-    // === Revenue ===
+    // === Revenue & Monthly Change ===
     const lastMonthRevenueAggregate = await prisma.payment.aggregate({
-    _sum: { amount: true },
-    where: { date: { gte: startOfLastMonth, lte: endOfLastMonth } },
+      _sum: { amount: true },
+      where: { date: { gte: startOfLastMonth, lte: endOfLastMonth } },
     });
     const lastMonthRevenue = lastMonthRevenueAggregate._sum.amount ?? 0;
 
     const thisMonthRevenueAggregate = await prisma.payment.aggregate({
-    _sum: { amount: true },
-    where: { date: { gte: startOfThisMonth, lte: now } },
+      _sum: { amount: true },
+      where: { date: { gte: startOfThisMonth, lte: now } },
     });
     const revenue = thisMonthRevenueAggregate._sum.amount ?? 0;
-            
-    const monthlyChangeRevenue =
-     lastMonthRevenue === 0
-      ? revenue === 0
-        ? 0
-        : 100 // first revenue ever
-      : ((revenue - lastMonthRevenue) / lastMonthRevenue) * 100;
 
-    // === Active Connections ===
+    const monthlyChangeRevenue =
+      lastMonthRevenue === 0
+        ? revenue === 0
+          ? 0
+          : 100
+        : ((revenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+
+    // === Active Connections & Uptime ===
     const activeConnections = await prisma.client.count({
       where: { status: "active" },
     });
-
-    // === Uptime ===
-    // For simplicity, assuming all clients are up; replace with actual calculation
     const uptime = totalClients ? (activeConnections / totalClients) * 100 : 0;
 
-    // === Revenue Chart Data (last 11 months) ===
-    const revenueData: { month: string; revenue: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const agg = await prisma.payment.aggregate({
-        _sum: { amount: true },
-        where: { date: { gte: start, lte: end } },
-      });
-      revenueData.push({
-        month: start.toLocaleString("en-US", { month: "short" }),
-        revenue: agg._sum.amount ?? 0,
-      });
-    }
+    // === Revenue Chart (last 12 months) ===
+    const revenueData = ( await Promise.all(
+      Array.from({ length: 12 }, (_, i) => {
+        const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+        return prisma.payment.aggregate({
+          _sum: { amount: true },
+          where: { date: { gte: start, lte: end } },
+        }).then((agg) => ({
+          month: start.toLocaleString("en-US", { month: "short" }),
+          revenue: agg._sum.amount ?? 0,
+        }));
+      })
+     )
+    ).reverse();
 
-    // === New Clients Chart Data (last 6 months) ===
-    const newClientsData: { month: string; clients: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const count = await prisma.client.count({
-        where: { installationDate: { gte: start, lte: end } },
-      });
-      newClientsData.push({
-        month: start.toLocaleString("en-US", { month: "short" }),
-        clients: count,
-      });
-    }
+    // === New Clients Chart (last 6 months) ===
+    const newClientsData = ( await Promise.all(
+      Array.from({ length: 12 }, (_, i) => {
+        const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+        return prisma.client.count({
+          where: { installationDate: { gte: start, lte: end } },
+        }).then((count) => ({
+          month: start.toLocaleString("en-US", { month: "short" }),
+          clients: count,
+        }));
+      })
+     )
+    ).reverse();
 
     // === Plan Distribution ===
-    const plans = await prisma.client.groupBy({
-      by: ["plan"],
-      _count: { plan: true },
+    const plans = await prisma.plan.findMany({
+      include: { clients: true }, // include related clients
     });
 
-    const planDistribution = plans.map((p) => {
-        let color = "#9ca3af";
-        if (p.plan.includes("Basic 50Mbps")) color = "#6366f1";
-        else if (p.plan.includes("Standard 100Mbps")) color = "#8b5cf6";
-        else if (p.plan.includes("Premium 500Mbps")) color = "#ec4899";
-        else if (p.plan.includes("Ultra 1Gbps")) color = "#f59e0b";
-
-        return {
-            name: p.plan, // keep the full name with price if you want
-            value: p._count.plan,
-            color,
-        };
-    });
+    const planDistribution = plans.map((plan) => ({
+      name: plan.name,
+      clients: plan.clients.length,
+      color: plan.color || "#9ca3af",
+    }));
 
     // === Recent Activity ===
     const recentPayments = await prisma.payment.findMany({
@@ -110,7 +101,7 @@ export async function GET() {
 
     const recentActivity = recentPayments.map((p) => ({
       id: p.id,
-      client: p.client.name,
+      client: p.client?.name ?? "Unknown",
       action: "Payment received",
       amount: `₱${p.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
       time: p.date.toLocaleString(),

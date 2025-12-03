@@ -42,6 +42,11 @@ interface DashboardStats {
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
+  const colorMap: Record<string, string> = {
+    amber: "#f59e0b",
+    purple: "#8b5cf6",
+    pink: "#ec4899",
+  };
   // Fetch all dashboard stats
   useEffect(() => {
     const fetchStats = async () => {
@@ -174,28 +179,32 @@ export function Dashboard() {
         {/* Plan Distribution */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-xl mb-4">Plan Distribution</h2>
-          {stats?.planDistribution && stats.planDistribution.length > 0 && (
-            <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                <Pie
-                    data={stats.planDistribution}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                    `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                    }
-                >
-                    {stats.planDistribution.map((entry, index) => {
-                    console.log(entry.color); // <- Check that color exists here
-                    return <Cell key={`cell-${index}`} fill={entry.color || "#9ca3af"} />;
-                    })}
-                </Pie>
-                <Tooltip />
-                </PieChart>
-            </ResponsiveContainer>
+            {stats?.planDistribution && stats.planDistribution.length > 0 && (
+              (() => {
+                const filteredPlans = stats.planDistribution.filter(p => Number(p.clients) > 0); // use 'clients', not 'value' if your API returns 'clients'
+                return (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={filteredPlans}
+                        dataKey="clients" // use the correct key from your API
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                        }
+                      >
+                        {filteredPlans.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={colorMap[entry.color] || "#9ca3af"} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()
             )}
         </div>
 
