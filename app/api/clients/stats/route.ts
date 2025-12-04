@@ -27,13 +27,13 @@ export async function GET() {
     // === Revenue & Monthly Change ===
     const lastMonthRevenueAggregate = await prisma.payment.aggregate({
       _sum: { amount: true },
-      where: { date: { gte: startOfLastMonth, lte: endOfLastMonth } },
+      where: { paymentDate: { gte: startOfLastMonth, lte: endOfLastMonth } },
     });
     const lastMonthRevenue = lastMonthRevenueAggregate._sum.amount ?? 0;
 
     const thisMonthRevenueAggregate = await prisma.payment.aggregate({
       _sum: { amount: true },
-      where: { date: { gte: startOfThisMonth, lte: now } },
+      where: { paymentDate: { gte: startOfThisMonth, lte: now } },
     });
     const revenue = thisMonthRevenueAggregate._sum.amount ?? 0;
 
@@ -57,7 +57,7 @@ export async function GET() {
         const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
         return prisma.payment.aggregate({
           _sum: { amount: true },
-          where: { date: { gte: start, lte: end } },
+          where: { paymentDate: { gte: start, lte: end } },
         }).then((agg) => ({
           month: start.toLocaleString("en-US", { month: "short" }),
           revenue: agg._sum.amount ?? 0,
@@ -94,7 +94,7 @@ export async function GET() {
 
     // === Recent Activity ===
     const recentPayments = await prisma.payment.findMany({
-      orderBy: { date: "desc" },
+      orderBy: { paymentDate: "desc" },
       take: 5,
       include: { client: true },
     });
@@ -104,7 +104,7 @@ export async function GET() {
       client: p.client?.name ?? "Unknown",
       action: "Payment received",
       amount: `₱${p.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-      time: p.date.toLocaleString(),
+      time: p.paymentDate.toLocaleString(),
     }));
 
     return NextResponse.json({

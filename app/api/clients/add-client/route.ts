@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
     // Use plan.price instead of static mapping
     const monthlyFee = plan.price;
 
+    const dueDate = new Date(installationDate);
+    dueDate.setMonth(dueDate.getMonth() + 1);
+
     // Create the client with a connected plan
     const newClient = await prisma.client.create({
       data: {
@@ -43,8 +46,19 @@ export async function POST(req: NextRequest) {
         status: "active",
         installationDate: new Date(installationDate),
         accountNumber: generateAccountNumber(),
+        dueDate,
       },
     });
+    
+    await prisma.invoice.create({
+    data: {
+      clientId: newClient.id,
+      amount: newClient.monthlyFee,
+      billingDate: newClient.installationDate,
+      dueDate: new Date(newClient.installationDate.getTime() + 30*24*60*60*1000), // +1 month
+      status: "pending",
+    }
+  });
 
     return NextResponse.json(newClient);
   } catch (error: any) {

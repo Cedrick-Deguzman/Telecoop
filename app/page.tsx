@@ -4,9 +4,10 @@ import { Dashboard } from './components/Dashboard';
 import { Clients } from './components/Clients';
 import { Payments } from './components/Payments';
 import { Plans } from './components/Plans';
-import { LayoutDashboard, Users, CreditCard, Package, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Package, Menu, X, Receipt } from 'lucide-react';
+import { Billing } from './components/Billing';
 
-type View = 'dashboard' | 'clients' | 'payments' | 'plans';
+type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -15,6 +16,7 @@ export default function App() {
   const navigation = [
     { id: 'dashboard' as View, name: 'Dashboard', icon: LayoutDashboard },
     { id: 'clients' as View, name: 'Clients', icon: Users },
+    { id: 'billing' as View, name: 'Billing', icon: Receipt },
     { id: 'payments' as View, name: 'Payments', icon: CreditCard },
     { id: 'plans' as View, name: 'Plans', icon: Package },
   ];
@@ -71,6 +73,7 @@ export default function App() {
         <div className="p-8">
           {currentView === 'dashboard' && <Dashboard />}
           {currentView === 'clients' && <Clients />}
+          {currentView === 'billing' && <Billing/>}
           {currentView === 'payments' && <Payments />}
           {currentView === 'plans' && <Plans />}
         </div>

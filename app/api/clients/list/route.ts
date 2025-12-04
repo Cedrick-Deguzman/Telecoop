@@ -7,14 +7,23 @@ export async function GET() {
       include: {
         plan: true,
         payment: {
-          orderBy: { date: "desc" },
+          orderBy: { paymentDate: "desc" },
           take: 1,
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(clients);
+    // Map 'payment' to 'payments' to match frontend
+    const formatted = clients.map((c) => ({
+      ...c,
+      payments: c.payment.map((p) => ({
+        paymentDate: p.paymentDate,
+        amount: p.amount,
+      })),
+    }));
+
+    return NextResponse.json(formatted);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch clients" }, { status: 500 });

@@ -25,7 +25,7 @@ interface Client {
   status: "active" | "inactive" | "suspended";
   installationDate: string;
   monthlyFee: number;
-  payments: { date: string }[];
+  payments: { paymentDate: string; amount: number }[];
 }
 
 interface Plan {
@@ -94,7 +94,7 @@ export function Clients() {
   // --------------------------------------------------
   const getLastPayment = (client: Client) => {
     return client.payments?.length > 0
-      ? new Date(client.payments[0].date).toLocaleDateString()
+      ? new Date(client.payments[0].paymentDate).toLocaleDateString()
       : "No payments";
   };
 
