@@ -17,7 +17,17 @@ export async function GET() {
     });
 
     // Transform for frontend BillingRecord format
-    const formatted = invoices.map(inv => ({
+    const formatted = invoices.map(inv => {
+      const today = new Date();
+      const due = new Date(inv.dueDate);
+
+      let status = inv.status;
+
+       // Auto-make it overdue if past due and not paid
+      if (status !== "paid" && due < today) {
+        status = "overdue";
+      }
+      return {
       id: inv.id,
       clientId: inv.clientId,
       clientName: inv.client.name,
@@ -26,12 +36,13 @@ export async function GET() {
       amount: inv.amount,
       billingDate: inv.billingDate.toISOString().split("T")[0],
       dueDate: inv.dueDate.toISOString().split("T")[0],
-      status: inv.status as "paid" | "pending" | "overdue",
+      status,
       paidDate: inv.paidDate
         ? inv.paidDate.toISOString().split("T")[0]
         : undefined,
       paymentMethod: inv.paymentMethod ?? undefined,
-    }));
+      };
+    });
 
     return NextResponse.json(formatted);
   } catch (err) {
