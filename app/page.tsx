@@ -16,8 +16,8 @@ export default function App() {
   const navigation = [
     { id: 'dashboard' as View, name: 'Dashboard', icon: LayoutDashboard },
     { id: 'clients' as View, name: 'Clients', icon: Users },
-    { id: 'billing' as View, name: 'Billing', icon: Receipt },
-    { id: 'payments' as View, name: 'Payments', icon: CreditCard },
+    { id: 'billing' as View, name: 'Monthly Billing', icon: Receipt },
+    { id: 'payments' as View, name: 'Payments History', icon: CreditCard },
     { id: 'plans' as View, name: 'Plans', icon: Package },
   ];
 
