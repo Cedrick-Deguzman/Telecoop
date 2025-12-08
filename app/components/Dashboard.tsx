@@ -212,7 +212,7 @@ export function Dashboard() {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-xl mb-4">Recent Activity</h2>
           <div className="space-y-4">
-            {stats?.recentActivity?.map((activity) => (
+            {stats?.recentActivity?.slice(0,4).map((activity) => (
               <div key={activity.id} className="flex items-center justify-between border-b pb-4 last:border-b-0">
                 <div>
                   <p>{activity.client}</p>
