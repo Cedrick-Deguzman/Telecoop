@@ -23,6 +23,7 @@ export function Billing() {
   const overdueCount = billingRecords.filter(r => r.status === 'overdue').length;
   const collectedAmount = billingRecords.filter(r => r.status === 'paid').reduce((sum, r) => sum + r.amount, 0);
   const pendingAmount = billingRecords.filter(r => r.status === 'pending' || r.status === 'overdue').reduce((sum, r) => sum + r.amount, 0);
+  const [paymentMethod, setPaymentMethod] = useState("");
 
   const getStatusColor = (status: BillingRecord['status']) => {
     switch (status) {
@@ -50,7 +51,7 @@ export function Billing() {
     setShowInvoiceModal(true);
   };
 
-  const confirmMarkAsPaid = async (paymentMethod: string) => {
+  const confirmMarkAsPaid = async (paymentMethod: string, referenceNumber: string | null,) => {
     if (!selectedRecord) return;
 
     try {
@@ -59,6 +60,7 @@ export function Billing() {
         body: JSON.stringify({
           id: selectedRecord.id,
           paymentMethod,
+          referenceNumber,
         }),
       });
 
@@ -247,7 +249,8 @@ export function Billing() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const paymentMethod = formData.get('paymentMethod') as string;
-                confirmMarkAsPaid(paymentMethod);
+                const referenceNumber = formData.get('referenceNumber') as string | null;
+                confirmMarkAsPaid(paymentMethod, referenceNumber);
               }}
               className="space-y-4"
             >
@@ -257,12 +260,28 @@ export function Billing() {
                   name="paymentMethod"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   required
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
                 >
                   <option value="">Select method...</option>
                   <option value="cash">Cash</option>
                   <option value="gcash">Gcash</option>
                   <option value="bank">Bank Transfer</option>
                 </select>
+                {(paymentMethod === "gcash" || paymentMethod === "bank") && (
+                  <div>
+                    <label className="block text-sm mb-2 text-gray-700">
+                      Reference Number
+                    </label>
+                    <input
+                      type="text"
+                      name="referenceNumber"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="Enter Gcash/Bank Reference No."
+                      required
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 pt-4">
                 <button

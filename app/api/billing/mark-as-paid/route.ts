@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  const { id, paymentMethod } = await req.json();
+  const { id, paymentMethod, referenceNumber } = await req.json();
 
   try {
     const invoice = await prisma.invoice.update({
@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
         status: "paid",
         paidDate: new Date(),
         paymentMethod,
+        referenceNumber,
       },
     });
 
@@ -20,7 +21,8 @@ export async function POST(req: NextRequest) {
         id: invoice.id,
         amount: invoice.amount,
         paymentDate: new Date(),
-        method: paymentMethod, // match your Payment model
+        method: paymentMethod,
+        referenceNumber,
       },
     });
 
