@@ -3,32 +3,17 @@
 import { useEffect, useState } from 'react';
 import { Search, Download, CheckCircle, XCircle, Clock, Filter } from 'lucide-react';
 import { InvoiceModal } from './InvoiceModal';
-interface BillingRecord {
-  id: number;
-  clientId: number;
-  clientName: string;
-  email: string;
-  plan: string;
-  amount: number;
-  billingDate: string;
-  dueDate: string;
-  status: 'paid' | 'pending' | 'overdue';
-  paidDate?: string;
-  paymentMethod?: string;
-  invoiceId: string;
-  date: string;
-  method: string;
-}
+import { PaymentRecord } from '@/types/Billings';
 
 export function Payments() {
-  const [payments, setPayments] = useState<BillingRecord[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | BillingRecord['status']>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | PaymentRecord['status']>('all');
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null);
 
-  const handleViewInvoice = (record: BillingRecord) => {
+  const handleViewInvoice = (record: PaymentRecord) => {
     setSelectedRecord(record);
     setShowInvoiceModal(true);
   };
@@ -62,13 +47,13 @@ export function Payments() {
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const pendingRevenue = payments
-    .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0);
+  // const pendingRevenue = payments
+  //   .filter(p => p.status === 'pending')
+  //   .reduce((sum, p) => sum + p.amount, 0);
 
   // const failedPayments = payments.filter(p => p.status === 'failed').length;
 
-  const getStatusIcon = (status: BillingRecord['status']) => {
+  const getStatusIcon = (status: PaymentRecord['status']) => {
     switch (status) {
       case 'paid': return <CheckCircle className="text-green-600" size={20} />;
       // case 'pending': return <Clock className="text-yellow-600" size={20} />;
@@ -76,7 +61,7 @@ export function Payments() {
     }
   };
 
-  const getStatusColor = (status: BillingRecord['status']) => {
+  const getStatusColor = (status: PaymentRecord['status']) => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
       // case 'pending': return 'bg-yellow-100 text-yellow-800';
