@@ -46,6 +46,7 @@ export function Dashboard() {
     amber: "#f59e0b",
     purple: "#8b5cf6",
     pink: "#ec4899",
+    indigo: "#6366f1",
   };
   // Fetch all dashboard stats
   useEffect(() => {
