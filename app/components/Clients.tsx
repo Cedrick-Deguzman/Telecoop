@@ -17,12 +17,13 @@ interface Client {
   name: string;
   email: string;
   phone: string;
+  planId: number;
   plan: {
     name: string;
     icon: string;
     color: string;
   };
-  status: "active" | "inactive" | "suspended";
+  status: "active" | "inactive";
   installationDate: string;
   monthlyFee: number;
   payments: { paymentDate: string; amount: number }[];
@@ -39,6 +40,8 @@ export function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [clientPlans, setClientPlans] = useState<Record<number, Plan>>({});
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // --------------------------------------------------
   // Filter clients by search input
@@ -84,7 +87,7 @@ export function Clients() {
     const colors = {
       active: "bg-green-100 text-green-800",
       inactive: "bg-gray-100 text-gray-800",
-      suspended: "bg-red-100 text-red-800",
+      // suspended: "bg-red-100 text-red-800",
     };
     return colors[status];
   };
@@ -97,6 +100,46 @@ export function Clients() {
       ? new Date(client.payments[0].paymentDate).toLocaleDateString()
       : "No payments";
   };
+
+  const handleUpdateClient = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!selectedClient) return;
+
+    const form = new FormData(e.currentTarget);
+
+    const payload = {
+      id: selectedClient.id,
+      name: form.get("name")?.toString(),
+      email: form.get("email")?.toString(),
+      phone: form.get("phone")?.toString(),
+      planId: form.get("planId") ? Number(form.get("planId")) : null,
+      status: form.get("status")?.toString(),
+    };
+
+    try {
+      const res = await fetch("/api/clients/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to update client");
+        return;
+      }
+
+      setShowEditModal(false);
+      setSelectedClient(null);
+      fetchClients();
+    } catch (err) {
+      console.error(err);
+      alert("Error updating client");
+    }
+  };
+
 
   const planIcons: Record<string, React.ElementType> = {
     "wifi": Wifi,
@@ -137,7 +180,7 @@ export function Clients() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total Clients" value={clients.length} />
         <StatCard label="Active" value={clients.filter((c) => c.status === "active").length} color="text-green-600" />
-        <StatCard label="Suspended" value={clients.filter((c) => c.status === "suspended").length} color="text-red-600" />
+        <StatCard label="Inactive" value={clients.filter((c) => c.status === "inactive").length} color="text-red-600" />
       </div>
 
       {/* -------------------------------------------- */}
@@ -210,8 +253,14 @@ export function Clients() {
                   {/* Actions */}
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
-                      <ActionButton icon={<Edit size={16} />} color="blue" />
-                      <ActionButton icon={<Trash2 size={16} />} color="red" />
+                      <ActionButton
+                        icon={<Edit size={16} />}
+                        color="blue"
+                        onClick={() => {
+                          setSelectedClient(client);
+                          setShowEditModal(true);
+                        }}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -226,6 +275,52 @@ export function Clients() {
       {/* Add Client Modal */}
       {/* -------------------------------------------- */}
       {showAddModal && <AddClientModal onClose={() => setShowAddModal(false)} refresh={fetchClients} plans={plans} />}
+      {/* Edit Client Modal */}
+      {showEditModal && selectedClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-2xl mb-4">Edit Client</h2>
+
+            <form className="space-y-4" onSubmit={handleUpdateClient}>
+              <FormInput label="Full Name" name="name" defaultValue={selectedClient.name} />
+              <FormInput label="Email" name="email" type="email" defaultValue={selectedClient.email} />
+              <FormInput label="Phone" name="phone" defaultValue={selectedClient.phone} />
+
+              <FormSelect
+                label="Plan"
+                name="planId"
+                options={plans.map((p) => ({ value: p.id, label: p.name }))}
+                defaultValue={selectedClient.planId}
+              />
+
+              <div>
+                <label className="block text-sm mb-1 text-gray-700">Status</label>
+                <select
+                  name="status"
+                  defaultValue={selectedClient.status || "inactive"}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Update Client
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -243,9 +338,9 @@ function StatCard({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function ActionButton({ icon, color }: { icon: React.ReactNode; color: string }) {
+function ActionButton({ icon, color, onClick }: { icon: React.ReactNode; color: string; onClick?: () => void }) {
   return (
-    <button className={`p-2 text-${color}-600 hover:bg-${color}-50 rounded`}>
+    <button onClick={onClick} className={`p-2 text-${color}-600 hover:bg-${color}-50 rounded`}>
       {icon}
     </button>
   );
@@ -337,17 +432,7 @@ function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refr
   );
 }
 
-function FormInput({
-  label,
-  name,
-  type = "text",
-  required,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  required?: boolean;
-}) {
+function FormInput({ label, name, type = "text", required, defaultValue }: any) {
   return (
     <div>
       <label className="block text-sm mb-1 text-gray-700">{label}</label>
@@ -355,36 +440,30 @@ function FormInput({
         name={name}
         type={type}
         required={required}
+        defaultValue={defaultValue}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
       />
     </div>
   );
 }
 
-function FormSelect({
-  label,
-  name,
-  required,
-  options,
-}: {
-  label: string;
-  name: string;
-  required?: boolean;
-  options: { value: number; label: string }[];
-}) {
+
+function FormSelect({ label, name, required, options, defaultValue }: any) {
   return (
     <div>
       <label className="block text-sm mb-1 text-gray-700">{label}</label>
       <select
         name={name}
         required={required}
+        defaultValue={defaultValue?.toString() || ""}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
       >
         <option value="">Select Plan</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        {options.map((opt: any) => (
+          <option key={opt.value} value={opt.value.toString()}>{opt.label}</option>
         ))}
       </select>
     </div>
   );
 }
+

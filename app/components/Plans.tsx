@@ -233,7 +233,9 @@ export function Plans() {
           </div>
           <div>
             <p className="text-gray-500">ARPU (Average Revenue Per Unit)</p>
-            <p className="text-2xl mt-1">₱{(totalRevenue / totalSubscribers).toFixed(2)}</p>
+             <p className="text-2xl mt-1">
+              ₱{totalSubscribers > 0 ? (totalRevenue / totalSubscribers).toFixed(2) : '0.00'}
+            </p>
           </div>
         </div>
       </div>

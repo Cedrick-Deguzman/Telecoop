@@ -50,6 +50,7 @@ model Client {
   plan          Plan?     @relation("PlanClients", fields: [planId], references: [id])
   status        String
   monthlyFee    Float
+  reactivatedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   payment       Payment[]
