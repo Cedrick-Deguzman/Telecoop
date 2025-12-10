@@ -64,18 +64,18 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
           <div className="text-right">
             <div className="mb-2">
               <p className="text-sm text-gray-600">Issue Date</p>
-              <p>{record.billingDate}</p>
+              <p>{record.billingDate.split('T')[0]}</p>
             </div>
             {isBillingRecord(record) && (
             <>
                 <div className="mb-2">
                 <p className="text-sm text-gray-600">Due Date</p>
-                <p>{record.dueDate}</p>
+                <p>{record.dueDate.split('T')[0]}</p>
                 </div>
                 {record.paidDate && (
                 <div>
                     <p className="text-sm text-gray-600">Paid Date</p>
-                    <p className="text-green-600">{record.paidDate}</p>
+                    <p className="text-green-600">{record.paidDate.split('T')[0]}</p>
                 </div>
                 )}
             </>
@@ -132,7 +132,7 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
             <span className="text-green-800">Payment Received</span>
             </div>
             <p className="text-sm text-green-700">
-            Paid on {record.paidDate} via {record.paymentMethod}
+            Paid on {record.paidDate.split('T')[0]} via {record.paymentMethod}
             </p>
         </div>
         )}

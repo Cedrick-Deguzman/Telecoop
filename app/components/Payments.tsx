@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Search, Download, CheckCircle, XCircle, Clock, Filter } from 'lucide-react';
 import { InvoiceModal } from './InvoiceModal';
 import { PaymentRecord } from '@/types/Billings';
+import { BillingRecord } from '@/types/Billings';
 
 export function Payments() {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -11,12 +12,28 @@ export function Payments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | PaymentRecord['status']>('all');
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<BillingRecord  | null>(null);
 
-  const handleViewInvoice = (record: PaymentRecord) => {
-    setSelectedRecord(record);
-    setShowInvoiceModal(true);
+  const handleViewInvoice = async (payment: PaymentRecord) => {
+    try {
+      const res = await fetch(
+        `/api/billing/invoices/${payment.invoiceId}`
+      );
+
+      if (!res.ok) {
+        alert("Invoice not found");
+        return;
+      }
+
+      const invoice: BillingRecord = await res.json();
+      setSelectedRecord(invoice);
+      setShowInvoiceModal(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load invoice");
+    }
   };
+
 
   useEffect(() => {
     async function fetchPayments() {

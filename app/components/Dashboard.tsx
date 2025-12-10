@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, DollarSign, Wifi } from 'lucide-react';
+import { Users, PhilippinePeso, Wifi } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
@@ -120,7 +120,7 @@ export function Dashboard() {
               )}
             </div>
             <div className="bg-green-100 p-4 rounded-full">
-              <DollarSign className="text-green-600" size={24} />
+              <PhilippinePeso className="text-green-600" size={24} />
             </div>
           </div>
         </div>

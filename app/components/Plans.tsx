@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wifi, Zap, Crown, Rocket, Users, DollarSign, TrendingUp, X } from 'lucide-react';
+import { Wifi, Zap, Crown, Rocket, Users, TrendingUp, X, PhilippinePeso } from 'lucide-react';
 
 type PlanType = {
   id: number;
@@ -218,7 +218,7 @@ export function Plans() {
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center gap-3">
           <div className="bg-green-100 p-3 rounded-full">
-            <DollarSign className="text-green-600" size={24} />
+            <PhilippinePeso className="text-green-600" size={24} />
           </div>
           <div>
             <p className="text-gray-500">Monthly Revenue</p>
@@ -460,7 +460,7 @@ export function Plans() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-2 text-gray-700">Monthly Price ($)</label>
+                  <label className="block text-sm mb-2 text-gray-700">Monthly Price (₱)</label>
                   <input
                     type="number"
                     name="price"
@@ -493,7 +493,7 @@ export function Plans() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Monthly Revenue</p>
-                    <p className="text-2xl mt-1">${(selectedPlan.subscribers * selectedPlan.price).toFixed(2)}</p>
+                    <p className="text-2xl mt-1">₱{(selectedPlan.subscribers * selectedPlan.price).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Market Share</p>

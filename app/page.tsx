@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { Clients } from './components/Clients';
 import { Payments } from './components/Payments';
 import { Plans } from './components/Plans';
-import { LayoutDashboard, Users, CreditCard, Package, Menu, X, Receipt } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Package, Menu, X, Receipt, Infinity } from 'lucide-react';
 import { Billing } from './components/Billing';
 
 type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans';
@@ -30,7 +30,17 @@ export default function App() {
         }`}
       >
         <div className="flex items-center justify-between p-6">
-          {sidebarOpen && <span className="text-2xl">Telecoop</span>}
+          {sidebarOpen && (
+            <span className="text-2xl flex items-center">
+              Telec
+              <Infinity
+                className="text-red-500 mt-2"
+                size={35}
+                strokeWidth={2.5}
+              />
+              p
+            </span>
+          )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-lg hover:bg-indigo-800"
