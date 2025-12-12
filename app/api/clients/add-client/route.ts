@@ -9,11 +9,18 @@ function generateAccountNumber() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, planName, installationDate } = body;
+    const { name, email, phone, planName, installationDate, napboxId, portNumber } = body;
 
     if (!name || !planName || !installationDate) {
       return NextResponse.json(
         { error: "Name, plan, and installation date are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!napboxId || !portNumber) {
+      return NextResponse.json(
+        { error: "Napbox and port selection are required" },
         { status: 400 }
       );
     }
@@ -35,13 +42,21 @@ export async function POST(req: NextRequest) {
     const dueDate = new Date(installationDate);
     dueDate.setMonth(dueDate.getMonth() + 1);
 
-    // Create the client with a connected plan
+    const port = await prisma.napboxPort.findFirst({
+      where: { napboxId: Number(napboxId), portNumber: Number(portNumber) }
+    });
+
+    if (!port) {
+      return NextResponse.json({ error: "Port not found" }, { status: 404 });
+    }
+    
+    // Create the client
     const newClient = await prisma.client.create({
       data: {
         name,
         email: email || null,
         phone: phone || null,
-        plan: { connect: { id: plan.id } }, // <- connect relation
+        plan: { connect: { id: plan.id } },
         monthlyFee,
         status: "active",
         installationDate: new Date(installationDate),
@@ -50,6 +65,40 @@ export async function POST(req: NextRequest) {
       },
     });
     
+    // Update port and connect to this client
+    await prisma.napboxPort.updateMany({
+      where: {
+        napboxId: Number(napboxId),
+        portNumber: Number(portNumber),
+      },
+      data: {
+        status: "occupied",
+        clientId: newClient.id,
+        connectedSince: new Date(),
+      },
+    });
+    
+    // Update napbox summary
+    const occupied = await prisma.napboxPort.count({
+      where: { napboxId: Number(napboxId), status: "occupied" },
+    });
+    const available = await prisma.napboxPort.count({
+      where: { napboxId: Number(napboxId), status: "available" },
+    });
+    const faulty = await prisma.napboxPort.count({
+      where: { napboxId: Number(napboxId), status: "faulty" },
+    });
+
+    // Update napbox summary
+    await prisma.napbox.update({
+      where: { id: Number(napboxId) },
+      data: {
+        availablePorts: available,
+        occupiedPorts: occupied,
+        faultyPorts: faulty,
+      },
+    });
+
     await prisma.invoice.create({
     data: {
       clientId: newClient.id,

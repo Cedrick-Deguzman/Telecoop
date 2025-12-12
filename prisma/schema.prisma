@@ -55,6 +55,7 @@ model Client {
   updatedAt     DateTime  @updatedAt
   payment       Payment[]
   invoices      Invoice[]
+  napboxPort    NapboxPort?
   @@map("client")
 }
 
@@ -90,4 +91,28 @@ model Payment {
   
   @@index([clientId], map: "Payment_clientId_idx")
   @@map("payment")
+}
+
+model Napbox {
+  id         Int           @id @default(autoincrement())
+  name       String
+  location   String
+  totalPorts Int
+  availablePorts Int
+  occupiedPorts  Int
+  faultyPorts    Int
+  installDate DateTime
+  status     String       
+  ports      NapboxPort[]
+}
+
+model NapboxPort {
+  id        Int      @id @default(autoincrement())
+  portNumber Int
+  status     String   
+  napbox     Napbox   @relation(fields: [napboxId], references: [id])
+  napboxId   Int
+  client     Client?  @relation(fields: [clientId], references: [id])
+  clientId   Int?     @unique
+  connectedSince DateTime?
 }

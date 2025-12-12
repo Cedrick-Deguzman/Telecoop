@@ -4,10 +4,11 @@ import { Dashboard } from './components/Dashboard';
 import { Clients } from './components/Clients';
 import { Payments } from './components/Payments';
 import { Plans } from './components/Plans';
-import { LayoutDashboard, Users, CreditCard, Package, Menu, X, Receipt, Infinity } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Package, Menu, X, Receipt, Infinity, Box } from 'lucide-react';
 import { Billing } from './components/Billing';
+import { NapBoxes } from './components/NapBoxes';
 
-type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans';
+type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -19,6 +20,7 @@ export default function App() {
     { id: 'billing' as View, name: 'Monthly Billing', icon: Receipt },
     { id: 'payments' as View, name: 'Payments History', icon: CreditCard },
     { id: 'plans' as View, name: 'Plans', icon: Package },
+    { id: 'napboxes' as View, name: 'Napboxes', icon: Box },
   ];
 
   return (
@@ -86,6 +88,7 @@ export default function App() {
           {currentView === 'billing' && <Billing/>}
           {currentView === 'payments' && <Payments />}
           {currentView === 'plans' && <Plans />}
+          {currentView === 'napboxes' && <NapBoxes />}
         </div>
       </main>
     </div>

@@ -9,8 +9,10 @@ import {
   Wifi,
   Zap,
   Crown,
-  Rocket
+  Rocket,
+  Box
 } from "lucide-react";
+import { NapBoxes } from "./NapBoxes";
 
 interface Client {
   id: number;
@@ -23,6 +25,7 @@ interface Client {
     icon: string;
     color: string;
   };
+  napboxPort?: NapboxPort | null;
   status: "active" | "inactive";
   installationDate: string;
   monthlyFee: number;
@@ -33,6 +36,17 @@ interface Plan {
   id: number;
   name: string;
 }
+interface NapboxPort {
+  napboxId: number;
+  portNumber: number;
+  status: "available" | "occupied" | "faulty";
+  clientId?: number | null;
+}
+interface Napbox {
+  id: number;
+  name: string;
+  ports: NapboxPort[];
+}
 
 export function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -42,6 +56,15 @@ export function Clients() {
   const [clientPlans, setClientPlans] = useState<Record<number, Plan>>({});
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedNapboxId, setSelectedNapboxId] = useState<number | null>(
+    selectedClient?.napboxPort?.napboxId || null
+  );
+  const [availablePorts, setAvailablePorts] = useState<NapboxPort[]>([]);
+  const [selectedPortNumber, setSelectedPortNumber] = useState<number | null>(
+    selectedClient?.napboxPort?.portNumber || null
+  );
+  const [napBoxes, setNapBoxes] = useState<Napbox[]>([]);
+  const [loadingNapboxes, setLoadingNapboxes] = useState(false);
 
   // --------------------------------------------------
   // Filter clients by search input
@@ -75,10 +98,44 @@ export function Clients() {
     }
   };
   
+  const fetchNapboxes = async () => {
+    try {
+      const res = await fetch("/api/napboxes");
+      const data = await res.json();
+      setNapBoxes(data);
+      return data;
+    } catch (err) {
+      console.error("Failed to load napboxes:", err);
+      return [];
+    }
+  };
+
   useEffect(() => {
     fetchClients();
     fetchPlans();
+    fetchNapboxes();
   }, []);
+
+  useEffect(() => {
+  if (!selectedNapboxId) {
+    setAvailablePorts([]);
+    return;
+  }
+
+  const napbox = napBoxes.find((n) => n.id === selectedNapboxId);
+  if (!napbox) {
+    setAvailablePorts([]);
+    return;
+  }
+
+  // Only show ports that are available or currently assigned to this client
+  const available = napbox.ports.filter(
+    (p) => p.status === "available" || p.clientId === selectedClient?.id || p.portNumber === selectedPortNumber
+  );
+
+  setAvailablePorts(available);
+}, [selectedNapboxId, napBoxes, selectedClient, selectedPortNumber]);
+
 
   // --------------------------------------------------
   // UI helper: status colors
@@ -115,6 +172,8 @@ export function Clients() {
       phone: form.get("phone")?.toString(),
       planId: form.get("planId") ? Number(form.get("planId")) : null,
       status: form.get("status")?.toString(),
+      napboxId: selectedNapboxId,
+      portNumber: selectedPortNumber,
     };
 
     try {
@@ -131,8 +190,12 @@ export function Clients() {
         return;
       }
 
+      await fetchNapboxes();
       setShowEditModal(false);
       setSelectedClient(null);
+      setSelectedNapboxId(null);
+      setSelectedPortNumber(null);
+      setAvailablePorts([]);
       fetchClients();
     } catch (err) {
       console.error(err);
@@ -146,6 +209,18 @@ export function Clients() {
     "zap": Zap,
     "crown": Crown,
     "rocket": Rocket,
+  };
+
+  const openEditModal = async (client: Client) => {
+    if (loadingNapboxes) return;
+    setLoadingNapboxes(true);
+    await fetchNapboxes();
+    setLoadingNapboxes(false);
+
+    setSelectedClient(client);
+    setSelectedNapboxId(client.napboxPort?.napboxId ?? null);
+    setSelectedPortNumber(client.napboxPort?.portNumber ?? null);
+    setShowEditModal(true);
   };
 
   return (
@@ -191,7 +266,7 @@ export function Clients() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {["Client", "Contact", "Plan", "Status", "Monthly Fee", "Last Payment", "Actions"].map((header) => (
+                {["Client", "Contact", "Plan", "Nap Box", "Status", "Monthly Fee", "Last Payment", "Actions"].map((header) => (
                   <th key={header} className="px-6 py-3 text-left text-gray-500">
                     {header}
                   </th>
@@ -235,6 +310,20 @@ export function Clients() {
                     {client.plan?.name || "N/A"}
                   </td>
 
+                  {/* Nap Box */}
+                  <td className="px-6 py-4">
+                    {client.napboxPort ? (
+                        <div className="flex items-center gap-2">
+                          <Box size={16} className="text-purple-600" />
+                          <div>
+                            <p className="text-sm">{napBoxes.find((n) => n.id === client.napboxPort?.napboxId)?.name}</p>
+                            <p className="text-xs text-gray-500">Port {client.napboxPort.portNumber}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not assigned</span>
+                      )}
+                  </td>
                   {/* Status */}
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${statusColor(client.status)}`}>
@@ -256,10 +345,7 @@ export function Clients() {
                       <ActionButton
                         icon={<Edit size={16} />}
                         color="blue"
-                        onClick={() => {
-                          setSelectedClient(client);
-                          setShowEditModal(true);
-                        }}
+                        onClick={() => openEditModal(client)}
                       />
                     </div>
                   </td>
@@ -274,7 +360,7 @@ export function Clients() {
       {/* -------------------------------------------- */}
       {/* Add Client Modal */}
       {/* -------------------------------------------- */}
-      {showAddModal && <AddClientModal onClose={() => setShowAddModal(false)} refresh={fetchClients} plans={plans} />}
+      {showAddModal && <AddClientModal onClose={() => setShowAddModal(false)} refresh={fetchClients} plans={plans} napbox={napBoxes}/>}
       {/* Edit Client Modal */}
       {showEditModal && selectedClient && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -304,7 +390,27 @@ export function Clients() {
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
+              <FormSelect
+                label="Napbox"
+                name="napboxId"
+                options={napBoxes.map((n) => ({ value: n.id, label: n.name }))}
+                defaultValue={selectedNapboxId || undefined}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  setSelectedNapboxId(Number(e.target.value));
+                  setSelectedPortNumber(null); // reset port when changing napbox
+                }}
+              />
 
+              {/* Port Select (only available ports) */}
+              <FormSelect
+                label="Port Number"
+                name="portNumber"
+                options={availablePorts.map((p) => ({ value: p.portNumber, label: `Port ${p.portNumber}` }))}
+                value={selectedPortNumber || undefined}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  setSelectedPortNumber(Number(e.target.value));
+                }}
+              />
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -350,7 +456,34 @@ function ActionButton({ icon, color, onClick }: { icon: React.ReactNode; color: 
 /* Modal Component                              */
 /* -------------------------------------------- */
 
-function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refresh : () => void; plans: Plan[] }) {
+function AddClientModal({ onClose, refresh, plans, napbox }: {
+  onClose: () => void;
+  refresh: () => void;
+  plans: Plan[];
+  napbox: Napbox[];
+}) {
+
+  // ✅ Hooks MUST be at top level
+  const [selectedNapboxId, setSelectedNapboxId] = useState<number | null>(null);
+  const [availablePorts, setAvailablePorts] = useState<NapboxPort[]>([]);
+
+  // ✅ Update available ports when napbox changes
+  useEffect(() => {
+    if (!selectedNapboxId) {
+      setAvailablePorts([]);
+      return;
+    }
+
+    const selected = napbox.find((n) => n.id === selectedNapboxId);
+    if (!selected) {
+      setAvailablePorts([]);
+      return;
+    }
+
+    const ports = selected.ports.filter((p) => p.status === "available");
+    setAvailablePorts(ports);
+  }, [selectedNapboxId, napbox]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -360,8 +493,9 @@ function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refr
       name: form.get("name")?.toString().trim(),
       email: form.get("email")?.toString().trim(),
       phone: form.get("phone")?.toString().trim(),
-      // planName: form.get("planName")?.toString(),
       planId: Number(form.get("planId")),
+      napboxId: Number(form.get("napboxId")),
+      portNumber: Number(form.get("portNumber")),
       installationDate: form.get("installationDate")?.toString(),
     };
 
@@ -372,23 +506,19 @@ function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refr
 
     try {
       const plan = plans.find((p) => p.id === payload.planId);
-      if (!plan) throw new Error("Selected plan not found");
 
       const res = await fetch("/api/clients/add-client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...payload,
-          planName: plan.name, // send name for your API
-        }),
+        body: JSON.stringify({ ...payload, planName: plan?.name }),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         alert(data.error || "Failed to add client");
         return;
       }
+
       refresh();
       onClose();
     } catch (err) {
@@ -406,12 +536,34 @@ function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refr
           <FormInput label="Full Name" name="name" required />
           <FormInput label="Email" name="email" type="email" />
           <FormInput label="Phone" name="phone" type="tel" />
+
           <FormSelect
             label="Plan"
             name="planId"
             required
             options={plans.map((p) => ({ value: p.id, label: p.name }))}
           />
+
+          <FormSelect
+            label="Napbox"
+            name="napboxId"
+            required
+            options={napbox.map((n) => ({ value: n.id, label: n.name }))}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setSelectedNapboxId(Number(e.target.value))
+            }
+          />
+
+          <FormSelect
+            label="Port Number"
+            name="portNumber"
+            required
+            options={availablePorts.map((p) => ({
+              value: p.portNumber,
+              label: `Port ${p.portNumber}`,
+            }))}
+          />
+
           <FormInput label="Installation Date" name="installationDate" type="date" required />
 
           <div className="flex gap-3 pt-4">
@@ -432,6 +584,7 @@ function AddClientModal({ onClose, refresh, plans }: { onClose: () => void; refr
   );
 }
 
+
 function FormInput({ label, name, type = "text", required, defaultValue }: any) {
   return (
     <div>
@@ -447,23 +600,24 @@ function FormInput({ label, name, type = "text", required, defaultValue }: any) 
   );
 }
 
-
-function FormSelect({ label, name, required, options, defaultValue }: any) {
+function FormSelect({ label, name, required, options, defaultValue, placeholder, onChange }: any) {
   return (
     <div>
       <label className="block text-sm mb-1 text-gray-700">{label}</label>
       <select
         name={name}
         required={required}
+        onChange={onChange}
         defaultValue={defaultValue?.toString() || ""}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
       >
-        <option value="">Select Plan</option>
+        <option value="">{placeholder || `Select ${label}`}</option>
         {options.map((opt: any) => (
-          <option key={opt.value} value={opt.value.toString()}>{opt.label}</option>
+          <option key={opt.value} value={opt.value.toString()}>
+            {opt.label}
+          </option>
         ))}
       </select>
     </div>
   );
 }
-

@@ -10,6 +10,7 @@ export async function GET() {
           orderBy: { paymentDate: "desc" },
           take: 1,
         },
+        napboxPort: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -21,6 +22,14 @@ export async function GET() {
         paymentDate: p.paymentDate,
         amount: p.amount,
       })),
+      napboxPort: c.napboxPort
+      ? {
+        id: c.napboxPort.id,
+        portNumber: c.napboxPort.portNumber,
+        status: c.napboxPort.status,
+        napboxId: c.napboxPort.napboxId,
+      }
+      : null
     }));
 
     return NextResponse.json(formatted);
