@@ -30,9 +30,9 @@ export async function POST(req: Request) {
     };
 
     // Handle napboxPort update if provided
-    if (napboxId && portNumber) {
+    if (napboxId !== undefined && portNumber !== undefined) {
       // Mark old port as available if client had one
-      const oldPort = await prisma.napboxPort.findUnique({ where: { clientId: Number(id) } });
+      const oldPort = await prisma.napboxPort.findFirst({ where: { clientId: Number(id) } });
       if (oldPort) {
         await prisma.napboxPort.update({
           where: { id: oldPort.id },

@@ -78,6 +78,7 @@ export async function PUT(req: NextRequest) {
         color,
         icon,
       },
+      include: { clients: true },
     });
 
     return NextResponse.json(updated);

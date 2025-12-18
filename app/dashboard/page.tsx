@@ -5,41 +5,9 @@ import { Users, PhilippinePeso, Wifi } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
+import { DashboardStats } from "./types";
 
-interface RevenueData {
-  month: string;
-  revenue: number;
-}
-
-interface PlanDistributionData {
-  name: string;
-  value: number;
-  color: string;
-  [key: string]: string | number;
-}
-
-interface RecentActivityData {
-  id: number;
-  client: string;
-  action: string;
-  amount: string;
-  time: string;
-}
-
-interface DashboardStats {
-  totalClients: number;
-  monthlyChangeClients: number;
-  revenue: number;
-  monthlyChangeRevenue: number;
-  activeConnections: number;
-  uptime: number;
-  revenueData: RevenueData[];
-  newClientsData: { month: string; clients: number }[];
-  planDistribution: PlanDistributionData[];
-  recentActivity: RecentActivityData[];
-}
-
-export function Dashboard() {
+export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
   const colorMap: Record<string, string> = {

@@ -1,16 +1,20 @@
-import { FC } from "react";
-import { CheckCircle, Download } from "lucide-react";
-import { BillingRecord, PaymentRecord } from "@/types/Billings";
+'use client';
 
-export interface InvoiceModalProps {
-  record: BillingRecord | PaymentRecord;
+import { CheckCircle, Download } from 'lucide-react';
+import { BillingRecord } from '../types';
+
+interface InvoiceModalProps {
+  invoice: BillingRecord | null;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
-  const isBillingRecord = (r: BillingRecord | PaymentRecord): r is BillingRecord => {
-    return (r as BillingRecord).dueDate !== undefined;
-  };
+export function InvoiceModal({
+  invoice,
+  isOpen,
+  onClose,
+}: InvoiceModalProps) {
+  if (!isOpen || !invoice) return null;
 
   const handleDownloadPDF = async () => {
     const invoice = document.getElementById("invoice-pdf");
@@ -21,7 +25,7 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
     const response = await fetch("/api/billing/invoice-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceHtml: htmlContent, fileName: `Invoice-${record.id}` }),
+      body: JSON.stringify({ invoiceHtml: htmlContent, fileName: `Invoice-${invoice.id}` }),
     });
 
     if (!response.ok) return alert("Failed to generate PDF");
@@ -31,7 +35,7 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Invoice-${record.id}.pdf`;
+    link.download = `Invoice-${invoice.id}.pdf`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -43,7 +47,7 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
         <div className="flex justify-between items-start mb-8">
           <div>
             <h2 className="text-3xl mb-2">INVOICE</h2>
-            <p className="text-gray-600">Invoice #INV-{record.id.toString().padStart(6, '0')}</p>
+            <p className="text-gray-600">Invoice #INV-{invoice.id.toString().padStart(6, '0')}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl text-red-900">Telecoop</p>
@@ -53,32 +57,28 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
           </div>
         </div>
 
-        {/* Invoice Details */}
+         {/* Invoice Details */}
         <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b">
           <div>
             <p className="text-sm text-gray-600 mb-1">Bill To:</p>
-            <p className="mb-1">{record.clientName}</p>
-            <p className="text-sm text-gray-600">{record.email}</p>
-            <p className="text-sm text-gray-600">Client ID: {record.clientId}</p>
+            <p className="mb-1">{invoice.clientName}</p>
+            <p className="text-sm text-gray-600">{invoice.email}</p>
+            <p className="text-sm text-gray-600">Client ID: {invoice.clientId}</p>
           </div>
           <div className="text-right">
             <div className="mb-2">
               <p className="text-sm text-gray-600">Issue Date</p>
-              <p>{record.billingDate.split('T')[0]}</p>
+              <p>{invoice.billingDate.split('T')[0]}</p>
             </div>
-            {isBillingRecord(record) && (
-            <>
-                <div className="mb-2">
-                <p className="text-sm text-gray-600">Due Date</p>
-                <p>{record.dueDate.split('T')[0]}</p>
-                </div>
-                {record.paidDate && (
-                <div>
-                    <p className="text-sm text-gray-600">Paid Date</p>
-                    <p className="text-green-600">{record.paidDate.split('T')[0]}</p>
-                </div>
-                )}
-            </>
+            <div className="mb-2">
+              <p className="text-sm text-gray-600">Due Date</p>
+              <p>{invoice.dueDate.split('T')[0]}</p>
+            </div>
+            {invoice.paidDate && (
+              <div>
+                <p className="text-sm text-gray-600">Paid Date</p>
+                <p className="text-green-600">{invoice.paidDate.split('T')[0]}</p>
+              </div>
             )}
           </div>
         </div>
@@ -96,12 +96,12 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
           <tbody>
             <tr className="border-b">
               <td className="py-4">
-                <p>{record.plan}</p>
+                <p>{invoice.plan}</p>
                 <p className="text-sm text-gray-600">Monthly Internet Service</p>
               </td>
               <td className="text-right py-4">1</td>
-              <td className="text-right py-4">₱{record.amount.toFixed(2)}</td>
-              <td className="text-right py-4">₱{record.amount.toFixed(2)}</td>
+              <td className="text-right py-4">₱{invoice.amount.toFixed(2)}</td>
+              <td className="text-right py-4">₱{invoice.amount.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -111,7 +111,7 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
           <div className="w-64 ml-auto">
             <div className="flex justify-between py-2">
               <span className="text-gray-600">Subtotal:</span>
-              <span>₱{record.amount.toFixed(2)}</span>
+              <span>₱{invoice.amount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between py-2">
               <span className="text-gray-600">Tax (0%):</span>
@@ -119,22 +119,22 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
             </div>
             <div className="flex justify-between py-3 border-t-2 border-gray-300">
               <span>Total:</span>
-              <span className="text-2xl">₱{record.amount.toFixed(2)}</span>
+              <span className="text-2xl">₱{invoice.amount.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Payment Status */}
-        {isBillingRecord(record) && record.status === 'paid' && record.paidDate && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        {invoice.paidDate && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="text-green-600" size={20} />
-            <span className="text-green-800">Payment Received</span>
+              <CheckCircle className="text-green-600" size={20} />
+              <span className="text-green-800">Payment Received</span>
             </div>
             <p className="text-sm text-green-700">
-            Paid on {record.paidDate.split('T')[0]} via {record.paymentMethod}
+              Paid on {invoice.paidDate.split('T')[0]} via {invoice.paymentMethod}
             </p>
-        </div>
+          </div>
         )}
 
         {/* Footer */}
@@ -159,4 +159,4 @@ export const InvoiceModal: FC<InvoiceModalProps> = ({ record, onClose }) => {
       </div>
     </div>
   );
-};
+}

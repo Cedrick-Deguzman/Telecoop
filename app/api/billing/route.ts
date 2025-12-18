@@ -55,6 +55,7 @@ export async function GET() {
         dueDate: inv.dueDate.toISOString().split("T")[0],
         status,
         paymentMethod: inv.paymentMethod ?? undefined,
+        paidDate: inv.paidDate ? inv.paidDate.toISOString().split("T")[0] : undefined,
       };
     });
 
