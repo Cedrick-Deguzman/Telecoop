@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Bottom: Logout */}
         <div className="mb-6 px-6">
           <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={() => signOut({ callbackUrl: `${window.location.origin}/login`, })}
             className="w-full flex items-center gap-4 px-4 py-3 hover:bg-red-600 rounded transition-colors"
           >
             <LogOut size={20} />
