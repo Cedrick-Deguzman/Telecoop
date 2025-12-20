@@ -43,6 +43,25 @@ export const authOptions = {
   pages: {
     signIn: '/login',
   },
+  
+  callbacks: {
+    async redirect({
+      url,
+      baseUrl,
+    }: {
+      url: string;
+      baseUrl: string;
+    }) {
+      try {
+        // Make relative URLs absolute using the request's origin
+        const target = new URL(url, baseUrl);
+        return `${target.origin}${target.pathname}`;
+      } catch {
+        // fallback to baseUrl if URL parsing fails
+        return baseUrl;
+      }
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);
