@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Users, CreditCard, Package, Receipt, Box, Infinity, X, Menu } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Package, Receipt, Box, Infinity, X, Menu, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes';
 
@@ -22,46 +23,58 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`bg-indigo-900 text-white transition-all duration-300 ${
+        className={`bg-indigo-900 text-white flex flex-col justify-between transition-all duration-300 ${
             sidebarOpen ? 'w-64' : 'w-20'
         }`}
         >
-        <div className="flex items-center justify-between p-6">
+        {/* Top */}
+        <div>
+          <div className="flex items-center justify-between p-6">
             {sidebarOpen && (
-            <span className="text-2xl flex items-center">
+              <span className="text-2xl flex items-center">
                 Telec
                 <Infinity className="text-red-500 mt-2" size={35} strokeWidth={2.5} />
                 p
-            </span>
+              </span>
             )}
             <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-indigo-800"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-indigo-800"
             >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
+          </div>
+
+          <nav className="mt-8">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentView === item.id;
+              return (
+                <a
+                  key={item.id}
+                  href={`/dashboard/${item.id === 'dashboard' ? '' : item.id}`}
+                  className={`w-full flex items-center gap-4 px-6 py-3 transition-colors ${
+                    isActive ? 'bg-indigo-800 border-l-4 border-white' : 'hover:bg-indigo-800'
+                  }`}
+                >
+                  <Icon size={20} />
+                  {sidebarOpen && <span>{item.name}</span>}
+                </a>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav className="mt-8">
-            {navigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-                <a
-                key={item.id}
-                href={`/dashboard/${item.id === 'dashboard' ? '' : item.id}`}
-                className={`w-full flex items-center gap-4 px-6 py-3 transition-colors ${
-                    isActive
-                    ? 'bg-indigo-800 border-l-4 border-white'
-                    : 'hover:bg-indigo-800'
-                }`}
-                >
-                <Icon size={20} />
-                {sidebarOpen && <span>{item.name}</span>}
-                </a>
-            );
-            })}
-        </nav>
+        {/* Bottom: Logout */}
+        <div className="mb-6 px-6">
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="w-full flex items-center gap-4 px-4 py-3 hover:bg-red-600 rounded transition-colors"
+          >
+            <LogOut size={20} />
+            {sidebarOpen && <span>Logout</span>}
+          </button>
+        </div>
         </aside>
 
 

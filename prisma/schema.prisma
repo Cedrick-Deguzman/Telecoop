@@ -116,3 +116,25 @@ model NapboxPort {
   clientId   Int?     @unique
   connectedSince DateTime?
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+
+  @@map("user")
+}
+
+model EmailOTP {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otpHash   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("emailotp")
+}
