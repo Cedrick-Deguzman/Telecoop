@@ -36,6 +36,7 @@ model Plan {
   clients   Client[] @relation("PlanClients")
   isActive Boolean @default(true)
 
+  @@map("plan")
 }
 
 model Client {
@@ -77,6 +78,8 @@ model Invoice {
   client        Client   @relation(fields: [clientId], references: [id])
 
   @@index([clientId], map: "Invoice_clientId_idx")
+
+  @@map("invoice")
 }
 
 model Payment {
@@ -104,6 +107,8 @@ model Napbox {
   installDate DateTime
   status     String       
   ports      NapboxPort[]
+
+  @@map("napbox")
 }
 
 model NapboxPort {
@@ -115,6 +120,8 @@ model NapboxPort {
   client     Client?  @relation(fields: [clientId], references: [id])
   clientId   Int?     @unique
   connectedSince DateTime?
+
+  @@map("napboxport")
 }
 
 model User {
