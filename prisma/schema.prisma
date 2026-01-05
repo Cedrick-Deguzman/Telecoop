@@ -41,7 +41,7 @@ model Plan {
 model Client {
   id            Int       @id @default(autoincrement())
   name          String
-  accountNumber String    @unique
+  accountNumber String?    @unique
   phone         String?
   email         String?
   installationDate DateTime

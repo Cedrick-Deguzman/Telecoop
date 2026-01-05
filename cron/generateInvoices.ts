@@ -1,69 +1,113 @@
 import cron from "node-cron";
 import { prisma } from "@/lib/prisma";
 
+function toUTC(date: Date) {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
 export function startInvoiceCron() {
   cron.schedule("* * * * *", async () => {
-    console.log("Cron running...");
+    console.log("Invoice cron running...");
     const today = new Date();
 
     const clients = await prisma.client.findMany({
-      include: { invoices: { orderBy: { billingDate: "asc" } } }, // get all invoices
+      where: { status: "active" },
+      include: {
+        invoices: {
+          orderBy: { billingDate: "desc" }, // latest first
+        },
+      },
     });
 
     for (const client of clients) {
-      if (client.status !== "active") {
-        console.log(`Skipping inactive client: ${client.name}`);
-        continue;
-      }
+      try {
+        const lastInvoice = client.invoices[0];
 
-      // Start from reactivatedAt, last invoice, or installationDate
-      let startDate = client.reactivatedAt
-        ? new Date(client.reactivatedAt)
-        : client.invoices.length
-        ? new Date(client.invoices[client.invoices.length - 1].billingDate)
-        : new Date(client.installationDate);
-
-      // Generate invoices month by month until today
-      while (
-        startDate.getFullYear() < today.getFullYear() ||
-        (startDate.getFullYear() === today.getFullYear() &&
-          startDate.getMonth() <= today.getMonth())
-      ) {
-        // Check if invoice exists for this month
-        const exists = client.invoices.some((inv) => {
-          const invDate = new Date(inv.billingDate);
-          return (
-            invDate.getFullYear() === startDate.getFullYear() &&
-            invDate.getMonth() === startDate.getMonth()
-          );
-        });
-
-        if (!exists) {
-          const billingDate = new Date(startDate);
-          await prisma.invoice.create({
-            data: {
-              clientId: client.id,
-              billingDate,
-              dueDate: new Date(billingDate.getTime() + 30 * 86400000),
-              amount: client.monthlyFee,
-              status: "pending",
-            },
-          });
-          console.log(`Generated invoice for ${client.name}: ${billingDate.toDateString()}`);
+        // Determine anchor date: last due date, reactivation, or installation
+        let anchorDate: Date;
+        if (
+          client.reactivatedAt &&
+          (!lastInvoice || new Date(client.reactivatedAt) > new Date(lastInvoice.dueDate))
+        ) {
+          anchorDate = new Date(client.reactivatedAt);
+        } else if (lastInvoice) {
+          anchorDate = new Date(lastInvoice.dueDate);
+        } else {
+          anchorDate = new Date(client.installationDate);
         }
 
-        // Move to next month
-        startDate.setMonth(startDate.getMonth() + 1);
-      }
+        // Next billing starts the day after anchor date
+        const nextBillingDate = new Date(anchorDate);
+        nextBillingDate.setDate(nextBillingDate.getDate() + 1);
 
-      // Mark last invoice overdue if needed
-      const lastInvoice = client.invoices[client.invoices.length - 1];
-      if (lastInvoice && lastInvoice.status !== "paid" && new Date(lastInvoice.dueDate) < today) {
-        await prisma.invoice.update({
-          where: { id: lastInvoice.id },
-          data: { status: "overdue" },
-        });
-        console.log(`Marked overdue: ${client.name}`);
+        // Determine due date
+        let dueDate: Date;
+        if (lastInvoice) {
+          const lastDueDate = new Date(lastInvoice.dueDate);
+          const lastDueDay = lastDueDate.getDate(); // 15 or 30
+
+          // next month/year
+          let nextMonth = lastDueDate.getMonth() + 1;
+          let nextYear = lastDueDate.getFullYear();
+          if (nextMonth > 11) {
+            nextMonth = 0;
+            nextYear += 1;
+          }
+
+          // max day in that month
+          const maxDay = new Date(nextYear, nextMonth + 1, 0).getDate();
+          const day = Math.min(lastDueDay, maxDay);
+
+          dueDate = new Date(nextYear, nextMonth, day);
+        } else {
+          // fallback: 30th of next month
+          let nextMonth = nextBillingDate.getMonth() + 1;
+          let nextYear = nextBillingDate.getFullYear();
+          if (nextMonth > 11) {
+            nextMonth = 0;
+            nextYear += 1;
+          }
+          const maxDay = new Date(nextYear, nextMonth + 1, 0).getDate();
+          const day = Math.min(30, maxDay);
+          dueDate = new Date(nextYear, nextMonth, day);
+        }
+
+        // Only create if billing date is today or earlier
+        if (nextBillingDate <= today) {
+          const exists = await prisma.invoice.findFirst({
+            where: {
+              clientId: client.id,
+              billingDate: nextBillingDate,
+            },
+          });
+
+          if (!exists) {
+            await prisma.invoice.create({
+              data: {
+                clientId: client.id,
+                billingDate: toUTC(nextBillingDate),
+                dueDate: toUTC(dueDate),
+                amount: client.monthlyFee,
+                status: "pending",
+              },
+            });
+
+            console.log(
+              `Generated invoice for ${client.name}: Billing ${nextBillingDate.toDateString()} - Due ${dueDate.toDateString()}`
+            );
+          }
+        }
+
+        // Mark overdue if pending and past due
+        if (lastInvoice && lastInvoice.status === "pending" && new Date(lastInvoice.dueDate) < today) {
+          await prisma.invoice.update({
+            where: { id: lastInvoice.id },
+            data: { status: "overdue" },
+          });
+          console.log(`Marked overdue: ${client.name}`);
+        }
+      } catch (err) {
+        console.error(`Invoice cron error for client ${client.name}`, err);
       }
     }
   });

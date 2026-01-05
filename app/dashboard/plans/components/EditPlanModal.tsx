@@ -82,7 +82,7 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
                 </div>
                 <div>
                 <p className="text-sm text-gray-600">Market Share</p>
-                <p className="text-2xl mt-1">{((plan.subscribers / totalSubscribers) * 100).toFixed(1)}%</p>
+                <p className="text-2xl mt-1">{totalSubscribers ? ((plan.subscribers / totalSubscribers) * 100).toFixed(1) : 0}%</p>
                 </div>
             </div>
           </div>

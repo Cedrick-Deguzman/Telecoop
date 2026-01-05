@@ -10,6 +10,11 @@ export async function GET() {
     const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const endOfThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const thisMonthClients = await prisma.client.count({
+      where: { installationDate: { gte: startOfThisMonth, lte: endOfThisMonth } },
+    });
 
     const lastMonthClients = await prisma.client.count({
       where: {
@@ -19,10 +24,10 @@ export async function GET() {
 
     const monthlyChangeClients =
       lastMonthClients === 0
-        ? totalClients === 0
+        ? thisMonthClients === 0
           ? 0
           : 100
-        : ((totalClients - lastMonthClients) / lastMonthClients) * 100;
+        : ((thisMonthClients - lastMonthClients) / lastMonthClients) * 100;
 
     // === Revenue & Monthly Change ===
     const lastMonthRevenueAggregate = await prisma.payment.aggregate({
@@ -66,20 +71,24 @@ export async function GET() {
      )
     ).reverse();
 
-    // === New Clients Chart (last 6 months) ===
-    const newClientsData = ( await Promise.all(
-      Array.from({ length: 12 }, (_, i) => {
-        const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-        return prisma.client.count({
-          where: { installationDate: { gte: start, lte: end } },
-        }).then((count) => ({
-          month: start.toLocaleString("en-US", { month: "short" }),
-          clients: count,
-        }));
-      })
-     )
-    ).reverse();
+    // === New Clients Chart (last 12 months) ===
+    const monthsToShow = 12;
+    const newClientsData = [];
+
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1); // 1st day of month
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59, 999); // last ms of month
+
+      const count = await prisma.client.count({
+        where: { installationDate: { gte: start, lte: end } },
+      });
+
+      newClientsData.push({
+        month: start.toLocaleString("en-US", { month: "short" }),
+        clients: count,
+      });
+    }
+
 
     // === Plan Distribution ===
     const plans = await prisma.plan.findMany({

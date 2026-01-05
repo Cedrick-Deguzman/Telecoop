@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Generate random 8-character account number
-function generateAccountNumber() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -60,7 +55,6 @@ export async function POST(req: NextRequest) {
         monthlyFee,
         status: "active",
         installationDate: new Date(installationDate),
-        accountNumber: generateAccountNumber(),
         dueDate,
       },
     });

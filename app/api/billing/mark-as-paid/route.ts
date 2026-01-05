@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
     await prisma.payment.create({
       data: {
         clientId: invoice.clientId,
-        id: invoice.id,
         amount: invoice.amount,
         paymentDate: new Date(),
         method: paymentMethod,
