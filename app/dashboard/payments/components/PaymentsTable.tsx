@@ -3,20 +3,10 @@ import { PaymentsRow } from './PaymentsRow';
 
 interface PaymentsTableProps {
   payments: PaymentRecord[];
-  searchTerm: string;
-  statusFilter: 'all' | PaymentRecord['status'];
   onViewInvoice: (payment: PaymentRecord) => void;
 }
 
-export function PaymentsTable({ payments, searchTerm, statusFilter, onViewInvoice }: PaymentsTableProps) {
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch =
-      payment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.invoiceId.toString().toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
+export function PaymentsTable({ payments, onViewInvoice }: PaymentsTableProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -35,7 +25,7 @@ export function PaymentsTable({ payments, searchTerm, statusFilter, onViewInvoic
             </tr>
           </thead>
           <tbody className="divide-y">
-            {filteredPayments.map(payment => (
+            {payments.map(payment => (
               <PaymentsRow key={payment.id} payment={payment} onViewInvoice={onViewInvoice} />
             ))}
           </tbody>

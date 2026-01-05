@@ -48,7 +48,7 @@ export function BillingRow({ record, onMarkAsPaid, onViewInvoice }: BillingRowPr
       <td className="px-6 py-4">₱{record.amount.toFixed(2)}</td>
 
       {/* Billing Date */}
-      <td className="px-6 py-4 text-sm text-gray-600">{record.billingDate}</td>
+      <td className="px-6 py-4 text-sm text-gray-600">{record.billingDate} - {record.dueDate}</td>
 
       {/* Due Date */}
       <td className="px-6 py-4">

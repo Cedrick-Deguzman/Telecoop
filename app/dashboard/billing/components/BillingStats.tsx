@@ -15,7 +15,10 @@ export function BillingStats({ records }: BillingStatsProps) {
   const totalBills = records.length;
   const paidCount = records.filter((r) => r.status === 'paid').length;
   const pendingAmount = records
-    .filter((r) => r.status === 'pending' || r.status === 'overdue')
+    .filter((r) => r.status === 'pending')
+    .reduce((sum, r) => sum + r.amount, 0);
+  const overdueAmount = records
+    .filter((r) => r.status === 'overdue')
     .reduce((sum, r) => sum + r.amount, 0);
 
   return (
@@ -23,7 +26,7 @@ export function BillingStats({ records }: BillingStatsProps) {
       <p className="text-yellow-800 text-sm">
         Note: This table only shows invoices for the current month. Payments collected for overdue invoices from previous months will not appear in Paid stats, but are included in the Total Revenue.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard label="Total Bills" value={totalBills} color="text-blue-600" />
 
         <StatCard
@@ -49,6 +52,12 @@ export function BillingStats({ records }: BillingStatsProps) {
           value={`₱${pendingAmount.toLocaleString()}`}
           color="text-yellow-600"
         />
+       
+        <StatCard
+          label="Overdue Amount"
+          value={`₱${overdueAmount.toLocaleString()}`}
+          color="text-red-600"
+        /> 
       </div>
     </div>
   );

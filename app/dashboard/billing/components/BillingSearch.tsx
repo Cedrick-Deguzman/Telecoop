@@ -6,6 +6,10 @@ interface BillingSearchProps {
   setSearchTerm: (value: string) => void;
   statusFilter: 'all' | BillingRecord['status'];
   setStatusFilter: (value: 'all' | BillingRecord['status']) => void;
+  dueFilter: 'all' | 15 | 30;
+  setDueFilter: (value: 'all' | 15 | 30) => void;
+  monthFilter: 'all' | number;
+  setMonthFilter: (value: 'all' | number) => void;
 }
 
 export function BillingSearch({
@@ -13,6 +17,10 @@ export function BillingSearch({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  dueFilter,
+  setDueFilter,
+  monthFilter,
+  setMonthFilter,
 }: BillingSearchProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -46,6 +54,37 @@ export function BillingSearch({
           <option value="paid">Paid</option>
           <option value="pending">Pending</option>
           <option value="overdue">Overdue</option>
+        </select>
+
+        <select
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        >
+          <option value="all">All Months</option>
+          <option value={0}>January</option>
+          <option value={1}>February</option>
+          <option value={2}>March</option>
+          <option value={3}>April</option>
+          <option value={4}>May</option>
+          <option value={5}>June</option>
+          <option value={6}>July</option>
+          <option value={7}>August</option>
+          <option value={8}>September</option>
+          <option value={9}>October</option>
+          <option value={10}>November</option>
+          <option value={11}>December</option>
+        </select>
+
+        <select
+          value={dueFilter}
+          onChange={(e) => setDueFilter(e.target.value === 'all' ? 'all' : Number(e.target.value) as 15 | 30)}
+          className="px-4 py-2 border border-gray-300 rounded-lg
+                    focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        >
+          <option value="all">All Due Dates</option>
+          <option value={15}>Due by 15</option>
+          <option value={30}>End of Month</option>
         </select>
 
         {/* Export (future feature) */}
