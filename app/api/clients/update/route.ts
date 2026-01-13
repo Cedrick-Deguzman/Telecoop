@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; 
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -10,84 +10,130 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
     }
 
-    // Validate status
     const allowedStatus = ["active", "inactive"];
     if (status && !allowedStatus.includes(status)) {
       return NextResponse.json({ error: "Invalid status value" }, { status: 400 });
     }
 
-    // Build data object for update
-    const data: any = {
-      name,
-      email,
-      phone,
-      status,
-      updatedAt: new Date(),
-      ...(status === "active" ? { reactivatedAt: new Date() } : {}),
-      ...(planId
-        ? { plan: { connect: { id: Number(planId) } } }
-        : { plan: { disconnect: true } }),
-    };
+    // Fetch existing client + port
+    const existingClient = await prisma.client.findUnique({
+      where: { id: Number(id) },
+      include: { napboxPort: true },
+    });
 
-    // Handle napboxPort update if provided
-    if (napboxId !== undefined && portNumber !== undefined) {
-      // Mark old port as available if client had one
-      const oldPort = await prisma.napboxPort.findFirst({ where: { clientId: Number(id) } });
-      if (oldPort) {
-        await prisma.napboxPort.update({
-          where: { id: oldPort.id },
-          data: { status: "available", clientId: null, connectedSince: null },
-        });
-      }
+    if (!existingClient) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
 
-      // Assign new port
+    /* ===============================
+       CLIENT BECOMES INACTIVE
+       =============================== */
+    if (status === "inactive" && existingClient.napboxPort) {
+      const port = existingClient.napboxPort;
+
+      // Save last connection info
+      await prisma.client.update({
+        where: { id: Number(id) },
+        data: {
+          lastNapboxId: port.napboxId,
+          lastPortNumber: port.portNumber,
+        },
+      });
+
+      // Release port
+      await prisma.napboxPort.update({
+        where: { id: port.id },
+        data: {
+          status: "available",
+          clientId: null,
+          connectedSince: null,
+        },
+      });
+
+      // Update napbox inventory
+      const [occupied, available, faulty] = await Promise.all([
+        prisma.napboxPort.count({ where: { napboxId: port.napboxId, status: "occupied" } }),
+        prisma.napboxPort.count({ where: { napboxId: port.napboxId, status: "available" } }),
+        prisma.napboxPort.count({ where: { napboxId: port.napboxId, status: "faulty" } }),
+      ]);
+
+      await prisma.napbox.update({
+        where: { id: port.napboxId },
+        data: { occupiedPorts: occupied, availablePorts: available, faultyPorts: faulty },
+      });
+    }
+
+    /* ===============================
+       CLIENT BECOMES ACTIVE (ASSIGN PORT)
+       =============================== */
+    if (status === "active" && napboxId && portNumber) {
       const newPort = await prisma.napboxPort.findFirst({
-        where: { napboxId: Number(napboxId), portNumber: Number(portNumber), status: "available" },
+        where: {
+          napboxId: Number(napboxId),
+          portNumber: Number(portNumber),
+          status: "available",
+        },
       });
 
       if (!newPort) {
-        return NextResponse.json({ error: "Selected port is not available" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Selected port is not available" },
+          { status: 400 }
+        );
       }
 
       await prisma.napboxPort.update({
         where: { id: newPort.id },
-        data: { status: "occupied", clientId: Number(id), connectedSince: new Date() },
+        data: {
+          status: "occupied",
+          clientId: Number(id),
+          connectedSince: new Date(),
+        },
+      });
+
+      const [occupied, available, faulty] = await Promise.all([
+        prisma.napboxPort.count({ where: { napboxId: Number(napboxId), status: "occupied" } }),
+        prisma.napboxPort.count({ where: { napboxId: Number(napboxId), status: "available" } }),
+        prisma.napboxPort.count({ where: { napboxId: Number(napboxId), status: "faulty" } }),
+      ]);
+
+      await prisma.napbox.update({
+        where: { id: Number(napboxId) },
+        data: { occupiedPorts: occupied, availablePorts: available, faultyPorts: faulty },
       });
     }
+    
+    // Enforce napbox + port when activating
+    if (status === "active") {
+      if (napboxId == null || portNumber == null) {
+        return NextResponse.json(
+          { error: "Napbox and port are required when activating a client" },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Count occupied and available ports
-    const occupied = await prisma.napboxPort.count({
-      where: { napboxId: Number(napboxId), status: "occupied" },
-    });
-    const available = await prisma.napboxPort.count({
-      where: { napboxId: Number(napboxId), status: "available" },
-    });
-    const faulty = await prisma.napboxPort.count({
-      where: { napboxId: Number(napboxId), status: "faulty" },
-    });
-
-    // Update napbox summary
-    await prisma.napbox.update({
-      where: { id: Number(napboxId) },
-      data: {
-        availablePorts: available,
-        occupiedPorts: occupied,
-        faultyPorts: faulty,
-      },
-    });
-
+    /* ===============================
+       FINAL CLIENT UPDATE
+       =============================== */
     const updatedClient = await prisma.client.update({
       where: { id: Number(id) },
-      data,
+      data: {
+        name,
+        email,
+        phone,
+        status,
+        updatedAt: new Date(),
+        ...(status === "active" ? { reactivatedAt: new Date() } : {}),
+        ...(planId
+          ? { plan: { connect: { id: Number(planId) } } }
+          : { plan: { disconnect: true } }),
+      },
       include: {
         plan: true,
         invoices: true,
         payment: true,
-        napboxPort: {
-          include: {
-            napbox: true, // Include the related napbox
-          },
-        },
+        napboxPort: { include: { napbox: true } },
       },
     });
 

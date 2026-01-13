@@ -12,6 +12,8 @@ export interface Client {
   installationDate: string;
   monthlyFee: number;
   payments: Payment[];
+  lastNapboxId?: number | null;
+  lastPortNumber?: number | null;
 }
 
 export interface PlanDetail {

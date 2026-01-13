@@ -4,6 +4,7 @@ import { Client, Plan, Napbox } from '../types';
 import { FormInput } from '@/app/components/ui/FormInput';
 import { FormSelect } from '@/app/components/ui/FormSelect';
 import { useClientsPorts } from '../hooks/useClientPorts';
+import { useState } from "react";
 
 interface EditClientModalProps {
   client: Client;
@@ -27,7 +28,10 @@ export default function EditClientModal({
     setSelectedPortNumber,
     availablePorts,
   } = useClientsPorts({ napboxes, selectedClient: client });
-
+  const [status, setStatus] = useState<Client["status"]>(client.status);
+  const lastNapboxName = napboxes.find(
+    (n) => n.id === client.lastNapboxId
+  )?.name;
 
   /* -------------------------------------------- */
   /* Submit handler                               */
@@ -37,7 +41,7 @@ export default function EditClientModal({
 
     const form = new FormData(e.currentTarget);
 
-    const payload = {
+    const payload: any = {
       id: client.id,
       name: form.get('name')?.toString(),
       email: form.get('email')?.toString(),
@@ -45,11 +49,17 @@ export default function EditClientModal({
       planId: form.get('planId')
         ? Number(form.get('planId'))
         : null,
-      status: form.get('status')?.toString(),
-      napboxId: selectedNapboxId,
-      portNumber: selectedPortNumber,
+      status,
     };
+    
+    if (selectedNapboxId != null) {
+      payload.napboxId = selectedNapboxId;
+    }
 
+    if (selectedPortNumber != null) {
+      payload.portNumber = selectedPortNumber;
+    }
+    
     try {
       const res = await fetch('/api/clients/update', {
         method: 'POST',
@@ -117,7 +127,16 @@ export default function EditClientModal({
             </label>
             <select
               name="status"
-              defaultValue={client.status}
+              value={status}
+              onChange={(e) => {
+                const newStatus = e.target.value as Client["status"];
+                setStatus(newStatus);
+
+                if (newStatus === "inactive") {
+                  setSelectedNapboxId(null);
+                  setSelectedPortNumber(null);
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg"
             >
               <option value="active">Active</option>
@@ -125,9 +144,35 @@ export default function EditClientModal({
             </select>
           </div>
 
+          {client.lastNapboxId && client.lastPortNumber && (
+            <button
+              type="button"
+              disabled={status !== "active"}
+              className={`mt-2 w-full px-3 py-2 rounded text-sm text-white
+                ${
+                  status === "active"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              onClick={() => {
+                if (status !== "active") return;
+                setSelectedNapboxId(client.lastNapboxId ?? null);
+                setSelectedPortNumber(client.lastPortNumber ?? null);
+              }}
+            >
+              Use Previous NAP Box / Port
+              {lastNapboxName && client.lastPortNumber && (
+                <span className="block text-xs mt-1 opacity-90">
+                  NAP Box {lastNapboxName} — Port {client.lastPortNumber}
+                </span>
+              )}
+            </button>
+          )}
+
          <FormSelect
             label="Napbox"
             name="napboxId"
+            disabled={status === "inactive"}
             options={napboxes.map((n) => ({
               value: n.id,
               label: n.name,
@@ -143,6 +188,7 @@ export default function EditClientModal({
           <FormSelect
             label="Port Number"
             name="portNumber"
+            disabled={status === "inactive" || !selectedNapboxId}
             options={availablePorts.map((p) => ({
               value: p.portNumber,
               label: `Port ${p.portNumber}`,
@@ -152,7 +198,6 @@ export default function EditClientModal({
               setSelectedPortNumber(Number(e.target.value))
             }
             placeholder={selectedNapboxId ? "Select Port" : "Select Napbox first"}
-            disabled={!selectedNapboxId}
           />
 
 
