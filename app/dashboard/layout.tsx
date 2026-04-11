@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { LayoutDashboard, Users, CreditCard, Package, Receipt, Box, Infinity, X, Menu, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes';
 
@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { id: 'plans' as View, name: 'Plans', icon: Package },
     { id: 'napboxes' as View, name: 'Napboxes', icon: Box },
   ];
+  const { data: session, status } = useSession();
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -80,9 +81,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm">
-          <div className="px-8 py-6">
+        <header className="bg-white shadow-sm flex">
+          <div className="px-8 py-6 flex items-center justify-between w-full">
             <h1 className="text-3xl">{navigation.find((i) => i.id === currentView)?.name}</h1>
+            <h1 className="text-xl">
+            {status === "loading"
+              ? "Welcome back!"
+              : `Welcome back, ${session?.user?.name ?? "User"}!`}
+          </h1>
           </div>
         </header>
         <div className="p-8">{children}</div>

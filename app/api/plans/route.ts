@@ -9,7 +9,10 @@ export async function GET() {
     const plans = await prisma.plan.findMany({
       orderBy: { id: "asc" },
       include: {
-        clients: true,
+          clients: {
+          where: { status: "ACTIVE" }, // adjust
+          select: { id: true },        // keep it light
+        },
       },
     });
 

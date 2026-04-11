@@ -10,7 +10,7 @@ export function PlansStats({ totalSubscribers, totalRevenue }: PlansStatsProps) 
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      <StatCard icon={<Users className="text-indigo-600" size={24} />} label="Total Subscribers" value={totalSubscribers} />
+      <StatCard icon={<Users className="text-indigo-600" size={24} />} label="Total Active Subscribers" value={totalSubscribers} />
       <StatCard icon={<PhilippinePeso className="text-green-600" size={24} />} label="Monthly Revenue" value={`₱${totalRevenue.toFixed(2)}`} />
       <StatCard icon={<TrendingUp className="text-purple-600" size={24} />} label="ARPU" value={`₱${arpu.toFixed(2)}`} />
     </div>

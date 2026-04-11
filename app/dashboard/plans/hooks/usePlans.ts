@@ -62,12 +62,13 @@ export function usePlans() {
     if (!res.ok) throw new Error("Failed to update plan");
 
     const savedPlan = await res.json();
-
-    // Normalize for UI
+    const clients = savedPlan.clients || [];
+    const activeClients = clients.filter((c: any) => c.status === "ACTIVE");
+   
     const normalizedPlan = {
       ...savedPlan,
-      clients: savedPlan.clients || [],        // preserve existing clients
-      subscribers: savedPlan.clients?.length || 0,
+      clients,
+      subscribers: activeClients.length,
     };
 
     setPlans(prev => prev.map(p => p.id === normalizedPlan.id ? normalizedPlan : p));
