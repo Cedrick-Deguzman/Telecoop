@@ -62,7 +62,9 @@ export function usePlans() {
 
     const savedPlan = await res.json();
     const clients = savedPlan.clients || [];
-    const activeClients = clients.filter((c: (typeof clients)[number]) => c.status === "ACTIVE");
+    const activeClients = clients.filter(
+      (c: (typeof clients)[number]) => c.status === "active"
+    );
    
     const normalizedPlan = {
       ...savedPlan,

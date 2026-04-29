@@ -10,7 +10,7 @@ export async function GET() {
       orderBy: { id: "asc" },
       include: {
           clients: {
-          where: { status: "ACTIVE" }, // adjust
+          where: { status: "active" },
           select: { id: true },        // keep it light
         },
       },
