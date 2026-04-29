@@ -27,19 +27,21 @@ export async function POST(req: Request) {
       });
     }
 
-    await prisma.$executeRaw`
-      DELETE FROM PasswordResetToken
-      WHERE email = ${email}
-    `;
+    await prisma.passwordResetToken.deleteMany({
+      where: { email },
+    });
 
     const code = generateResetCode();
     const tokenHash = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    await prisma.$executeRaw`
-      INSERT INTO PasswordResetToken (email, tokenHash, expiresAt)
-      VALUES (${email}, ${tokenHash}, ${expiresAt})
-    `;
+    await prisma.passwordResetToken.create({
+      data: {
+        email,
+        tokenHash,
+        expiresAt,
+      },
+    });
 
     await transporter.sendMail({
       to: email,

@@ -20,19 +20,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const resetTokens = await prisma.$queryRaw<Array<{
-      id: number;
-      tokenHash: string;
-    }>>`
-      SELECT id, tokenHash
-      FROM PasswordResetToken
-      WHERE email = ${email}
-        AND expiresAt > ${new Date()}
-      ORDER BY createdAt DESC
-      LIMIT 1
-    `;
-
-    const resetToken = resetTokens[0];
+    const resetToken = await prisma.passwordResetToken.findFirst({
+      where: {
+        email,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        tokenHash: true,
+      },
+    });
 
     if (!resetToken) {
       return NextResponse.json(
@@ -62,10 +64,9 @@ export async function POST(req: Request) {
         where: { email },
         data: { password: hashedPassword },
       }),
-      prisma.$executeRaw`
-        DELETE FROM PasswordResetToken
-        WHERE email = ${email}
-      `,
+      prisma.passwordResetToken.deleteMany({
+        where: { email },
+      }),
     ]);
 
     return NextResponse.json({ success: true });
