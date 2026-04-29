@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { syncClientDueDate } from "@/lib/billing-cycle";
 
 export async function POST(req: NextRequest) {
   const { id, paymentMethod, referenceNumber } = await req.json();
@@ -24,6 +25,8 @@ export async function POST(req: NextRequest) {
         referenceNumber,
       },
     });
+
+    await syncClientDueDate(invoice.clientId);
 
     return NextResponse.json(invoice);
   } catch (err) {

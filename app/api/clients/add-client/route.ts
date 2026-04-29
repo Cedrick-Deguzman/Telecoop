@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { syncClientDueDate } from "@/lib/billing-cycle";
 
 export async function POST(req: NextRequest) {
   try {
@@ -94,14 +95,16 @@ export async function POST(req: NextRequest) {
     });
 
     await prisma.invoice.create({
-    data: {
-      clientId: newClient.id,
-      amount: newClient.monthlyFee,
-      billingDate: newClient.installationDate,
-      dueDate: new Date(newClient.installationDate.getTime() + 30*24*60*60*1000), // +1 month
-      status: "pending",
-    }
-  });
+      data: {
+        clientId: newClient.id,
+        amount: newClient.monthlyFee,
+        billingDate: newClient.installationDate,
+        dueDate,
+        status: "pending",
+      },
+    });
+
+    await syncClientDueDate(newClient.id);
 
     return NextResponse.json(newClient);
   } catch (error: unknown) {
