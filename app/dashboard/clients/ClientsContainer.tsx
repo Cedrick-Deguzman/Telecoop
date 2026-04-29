@@ -8,6 +8,7 @@ import EditClientModal from './components/EditClientModal';
 import { Client } from './types';
 import { StatsSummary } from './components/StatsSummary';
 import { useClients } from './hooks/useClients';
+import { ClientsSkeleton } from '../components/PageSkeletons';
 
 export default function ClientsContainer() {
   const {
@@ -15,6 +16,7 @@ export default function ClientsContainer() {
     filteredClients,
     plans,
     napboxes,
+    loading,
     search,
     setSearch,
     fetchClients,
@@ -41,6 +43,10 @@ export default function ClientsContainer() {
   /* -------------------------------------------- */
   /* Render                                       */
   /* -------------------------------------------- */
+
+  if (loading) {
+    return <ClientsSkeleton />;
+  }
 
   return (
     <div>

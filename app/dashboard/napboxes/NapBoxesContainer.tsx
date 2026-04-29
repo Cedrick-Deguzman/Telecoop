@@ -9,6 +9,7 @@ import { NapBoxesSearch } from './components/NapBoxesSearch';
 import { NapBoxesGrid } from './components/NapBoxesGrid';
 import { PortsModal } from './components/PortsModal';
 import { AddEditNapBoxModal } from './components/AddEditNapBoxModal';
+import { NapboxesSkeleton } from '../components/PageSkeletons';
 
 export function NapBoxesContainer() {
   const {
@@ -25,7 +26,7 @@ export function NapBoxesContainer() {
   const [showAddEdit, setShowAddEdit] = useState(false);
   const [editingNapBox, setEditingNapBox] = useState<NapBox | null>(null);
 
-  if (loading) return <p>Loading NAP Boxes...</p>;
+  if (loading) return <NapboxesSkeleton />;
 
   return (
     <div className="space-y-6">

@@ -10,6 +10,7 @@
   import { ReferenceWarningModal } from './components/ReferenceWarningModal';
   import { useMarkPaid } from './hooks/useMarkPaid';
   import { usePagination } from './hooks/usePagination';
+  import { BillingSkeleton } from '../components/PageSkeletons';
 
   export function BillingContainer() {
     const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
@@ -18,6 +19,7 @@
     const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
     const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [loading, setLoading] = useState(true);
     const {
       confirmMarkAsPaid,
       refWarningInvoices,
@@ -30,12 +32,15 @@
 
     // Load billing records from API
     const loadBillingRecords = async () => {
+      setLoading(true);
       try {
         const res = await fetch('/api/billing');
         const data = await res.json();
         setBillingRecords(data);
       } catch (err) {
         console.error('Failed to load billing records:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -47,6 +52,8 @@
           setBillingRecords(data);
         } catch (err) {
           console.error('Failed to load billing records:', err);
+        } finally {
+          setLoading(false);
         }
       }
 
@@ -118,6 +125,10 @@
       paginatedItems,
       totalPages
     } = usePagination(filteredRecords, 10);
+
+    if (loading) {
+      return <BillingSkeleton />;
+    }
 
     return (
       <div className="space-y-6">

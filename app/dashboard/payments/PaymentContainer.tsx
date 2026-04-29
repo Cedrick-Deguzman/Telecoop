@@ -8,6 +8,7 @@ import { PaymentsSearch } from './components/PaymentsSearch';
 import { PaymentsTable } from './components/PaymentsTable';
 import { InvoiceModal } from '../billing/components/InvoiceModal';
 import { usePagination } from '../billing/hooks/usePagination';
+import { PaymentsSkeleton } from '../components/PageSkeletons';
 
 export function PaymentsContainer() {
   const { payments, loading, error, viewInvoice } = usePayments();
@@ -39,7 +40,7 @@ export function PaymentsContainer() {
     }
   };
 
-  if (loading) return <div className="text-center py-10 text-gray-500">Loading payments...</div>;
+  if (loading) return <PaymentsSkeleton />;
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
   
   return (

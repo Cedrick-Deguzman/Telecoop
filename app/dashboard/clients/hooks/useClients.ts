@@ -8,6 +8,7 @@ interface UseClientsReturn {
   filteredClients: Client[];
   plans: Plan[];
   napboxes: Napbox[];
+  loading: boolean;
   search: string;
   setSearch: (value: string) => void;
   fetchClients: () => Promise<void>;
@@ -21,6 +22,7 @@ export function useClients(): UseClientsReturn {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [napboxes, setNapboxes] = useState<Napbox[]>([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
   /* -------------------------------------------- */
   /* Fetch functions                              */
@@ -41,26 +43,35 @@ export function useClients(): UseClientsReturn {
   };
 
   const refreshAll = async () => {
-    await Promise.all([fetchClients(), fetchPlans(), fetchNapboxes()]);
+    setLoading(true);
+    try {
+      await Promise.all([fetchClients(), fetchPlans(), fetchNapboxes()]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     async function loadInitialData() {
-      const [clientsRes, plansRes, napboxesRes] = await Promise.all([
-        fetch('/api/clients/list'),
-        fetch('/api/plans'),
-        fetch('/api/napboxes'),
-      ]);
+      try {
+        const [clientsRes, plansRes, napboxesRes] = await Promise.all([
+          fetch('/api/clients/list'),
+          fetch('/api/plans'),
+          fetch('/api/napboxes'),
+        ]);
 
-      const [clientsData, plansData, napboxesData] = await Promise.all([
-        clientsRes.json(),
-        plansRes.json(),
-        napboxesRes.json(),
-      ]);
+        const [clientsData, plansData, napboxesData] = await Promise.all([
+          clientsRes.json(),
+          plansRes.json(),
+          napboxesRes.json(),
+        ]);
 
-      setClients(clientsData);
-      setPlans(plansData);
-      setNapboxes(napboxesData);
+        setClients(clientsData);
+        setPlans(plansData);
+        setNapboxes(napboxesData);
+      } finally {
+        setLoading(false);
+      }
     }
 
     void loadInitialData();
@@ -84,6 +95,7 @@ export function useClients(): UseClientsReturn {
     filteredClients,
     plans,
     napboxes,
+    loading,
     search,
     setSearch,
     fetchClients,

@@ -5,6 +5,7 @@ import { PlanType, PlanColorClasses } from '../types';
 
 export function usePlans() {
   const [plans, setPlans] = useState<PlanType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [editingFeatures, setEditingFeatures] = useState<string[]>([]);
   const [planStatus, setPlanStatus] = useState('true');
@@ -35,11 +36,15 @@ export function usePlans() {
 
   useEffect(() => {
     const fetchPlans = async () => {
-      const res = await fetch("/api/plans");
-      const data = await res.json();
-      setPlans(data);
+      try {
+        const res = await fetch("/api/plans");
+        const data = await res.json();
+        setPlans(data);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchPlans();
+    void fetchPlans();
   }, []);
 
   const handleManagePlan = (plan: PlanType) => {
@@ -115,6 +120,7 @@ export function usePlans() {
 
   return {
     plans,
+    loading,
     selectedPlan,
     showAddPlan,
     showManageModal,

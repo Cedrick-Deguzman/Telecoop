@@ -6,10 +6,12 @@ import { PlanTable } from "./components/PlansTable";
 import { EditPlanModal } from "./components/EditPlanModal";
 import { AddPlanModal } from "./components/AddPlanModal";
 import { usePlans } from "./hooks/usePlans";
+import { PlansSkeleton } from "../components/PageSkeletons";
 
 export function PlansContainer() {
   const {
     plans,
+    loading,
     selectedPlan,
     showAddPlan,
     setShowAddPlan,
@@ -21,6 +23,10 @@ export function PlansContainer() {
     totalRevenue,
     colorClasses,
   } = usePlans();
+
+  if (loading) {
+    return <PlansSkeleton />;
+  }
 
   return (
     <div className="space-y-6">

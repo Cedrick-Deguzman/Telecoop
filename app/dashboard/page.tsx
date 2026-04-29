@@ -6,9 +6,11 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 import { DashboardStats } from "./types";
+import { DashboardSkeleton } from "./components/PageSkeletons";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const colorMap: Record<string, string> = {
     amber: "#f59e0b",
@@ -37,6 +39,8 @@ export default function Dashboard() {
           planDistribution: [],
           recentActivity: [],
         });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -46,6 +50,10 @@ export default function Dashboard() {
   // Format currency in PHP
   const formatCurrency = (value: number) =>
     `₱${value?.toLocaleString("en-PH", { minimumFractionDigits: 0 })}`;
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
