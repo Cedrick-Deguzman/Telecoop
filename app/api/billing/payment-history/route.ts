@@ -19,7 +19,7 @@ export async function GET() {
       },
     });
 
-    const formatted = payments.map(inv => ({
+    const formatted = payments.map((inv: (typeof payments)[number]) => ({
       id: inv.id,
       invoiceId: inv.id,
       clientId: inv.clientId,
