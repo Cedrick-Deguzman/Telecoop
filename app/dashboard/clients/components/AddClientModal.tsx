@@ -4,6 +4,7 @@ import { Plan, Napbox } from '../types';
 import { FormInput } from '@/app/components/ui/FormInput';
 import { FormSelect } from '@/app/components/ui/FormSelect';
 import { useClientsPorts } from '../hooks/useClientPorts';
+import type { ChangeEvent } from 'react';
 
 interface AddClientModalProps {
   plans: Plan[];
@@ -109,7 +110,7 @@ export default function AddClientModal({
               label: n.name,
             }))}
             value={selectedNapboxId ?? ""}
-            onChange={(e: any) => {
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
               setSelectedNapboxId(Number(e.target.value));
               setSelectedPortNumber(null);
             }} 
@@ -124,7 +125,7 @@ export default function AddClientModal({
               label: `Port ${p.portNumber}`,
             }))}
             value={selectedPortNumber ?? ""}
-             onChange={(e: any) => setSelectedPortNumber(Number(e.target.value))}
+             onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedPortNumber(Number(e.target.value))}
           />
 
           <FormInput

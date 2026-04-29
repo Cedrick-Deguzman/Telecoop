@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { NapBox, Port } from '../types';
+import { NapBox } from '../types';
 
 export function useNapBoxes() {
   const [napBoxes, setNapBoxes] = useState<NapBox[]>([]);

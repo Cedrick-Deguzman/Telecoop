@@ -15,8 +15,8 @@ export function useBillingRecords() {
       if (!res.ok) throw new Error('Failed to fetch billing records');
       const data: BillingRecord[] = await res.json();
       setBillingRecords(data);
-    } catch (err: any) {
-      setError(err.message || 'Unknown error');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }

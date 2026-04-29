@@ -22,14 +22,19 @@ export function PaymentsContainer() {
   );
 
   const { currentPage, setCurrentPage, paginatedItems: paginatedPayments, totalPages } =
-    usePagination(filteredPayments, rowsPerPage, [searchTerm]);
+    usePagination(filteredPayments, rowsPerPage);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   const handleViewInvoice = async (payment: PaymentRecord) => {
     try {
       const invoice = await viewInvoice(payment.invoiceId);
       setSelectedInvoice(invoice);
       setShowInvoiceModal(true);
-    } catch (err) {
+    } catch {
       alert('Failed to load invoice');
     }
   };
@@ -42,7 +47,7 @@ export function PaymentsContainer() {
       <PaymentsStats payments={payments} />
       <PaymentsSearch
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={handleSearchChange}
       />
       <PaymentsTable
         payments={paginatedPayments}

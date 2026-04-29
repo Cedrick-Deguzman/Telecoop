@@ -1,15 +1,13 @@
 import { MapPin, X } from 'lucide-react';
-import { NapBox, Port } from '../types';
+import { NapBox } from '../types';
 import { useState } from 'react';
 
 export function PortsModal({
   napBox,
   onClose,
-  filteredNapBoxes,
 }: {
   napBox: NapBox;
   onClose: () => void;
-  filteredNapBoxes: 'all' | 'available' | 'occupied' | 'faulty';
 }) {
   const portColor = {
     available: 'bg-green-500',

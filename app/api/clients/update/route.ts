@@ -138,10 +138,13 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(updatedClient, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating client:", error);
     return NextResponse.json(
-      { error: "Failed to update client", details: error.message },
+      {
+        error: "Failed to update client",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

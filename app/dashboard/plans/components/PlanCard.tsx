@@ -1,9 +1,9 @@
-import { PlanType } from "../types";
+import { PlanType, PlanColorClasses } from "../types";
 
 interface PlanCardProps {
   plan: PlanType;
   totalSubscribers: number;
-  colors: Record<string, any>;
+  colors: PlanColorClasses;
   onManage: (plan: PlanType) => void;
 }
 
@@ -43,7 +43,15 @@ export function PlanCard({ plan, totalSubscribers, colors, onManage }: PlanCardP
   );
 }
 
-function SubscribersBar({ plan, totalSubscribers, colors }: { plan: PlanType; totalSubscribers: number; colors: any }) {
+function SubscribersBar({
+  plan,
+  totalSubscribers,
+  colors,
+}: {
+  plan: PlanType;
+  totalSubscribers: number;
+  colors: PlanColorClasses[PlanType["color"]];
+}) {
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between text-sm mb-2">

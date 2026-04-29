@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Napbox, NapboxPort, Client } from '../types';
 
 interface UseNapboxesProps {
@@ -23,29 +23,22 @@ export function useNapboxes({ napboxes, client }: UseNapboxesProps): UseNapboxes
   const [selectedPortNumber, setSelectedPortNumber] = useState<number | null>(
     client?.napboxPort?.portNumber ?? null
   );
-  const [availablePorts, setAvailablePorts] = useState<NapboxPort[]>([]);
-
-  useEffect(() => {
+  const availablePorts = useMemo<NapboxPort[]>(() => {
     if (!selectedNapboxId) {
-      setAvailablePorts([]);
-      return;
+      return [];
     }
 
     const napbox = napboxes.find((n) => n.id === selectedNapboxId);
     if (!napbox) {
-      setAvailablePorts([]);
-      return;
+      return [];
     }
 
-    // Include only available ports or the current client's port
-    const ports = napbox.ports.filter(
+    return napbox.ports.filter(
       (p) =>
         p.status === 'available' ||
         p.clientId === client?.id ||
         p.portNumber === selectedPortNumber
     );
-
-    setAvailablePorts(ports);
   }, [selectedNapboxId, napboxes, client?.id, selectedPortNumber]);
 
   return {

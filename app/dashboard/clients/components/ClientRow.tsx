@@ -1,7 +1,7 @@
 'use client';
 
 import { Client } from '../types';
-import { Pencil, Trash2, Wifi, Zap, Crown, Rocket, Box, Phone, Mail } from 'lucide-react';
+import { Pencil, Wifi, Zap, Crown, Rocket, Box, Phone, Mail } from 'lucide-react';
 import { ActionButton }  from '../../../components/ui/ActionButton';
 import { getLastPayment } from '@/app/utils/payment';
 

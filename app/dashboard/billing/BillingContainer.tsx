@@ -19,8 +19,7 @@
     const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const {
-    confirmMarkAsPaid,
-      loading,
+      confirmMarkAsPaid,
       refWarningInvoices,
       pendingPayment,
       setRefWarningInvoices,
@@ -41,7 +40,17 @@
     };
 
     useEffect(() => {
-      loadBillingRecords();
+      async function fetchInitialBillingRecords() {
+        try {
+          const res = await fetch('/api/billing');
+          const data = await res.json();
+          setBillingRecords(data);
+        } catch (err) {
+          console.error('Failed to load billing records:', err);
+        }
+      }
+
+      void fetchInitialBillingRecords();
     }, []);
 
     // Filter records by search term and status
@@ -71,6 +80,26 @@
       return matchesSearch && matchesStatus && matchesDue && matchesMonth;
     });
 
+    const handleSearchChange = (value: string) => {
+      setSearchTerm(value);
+      setCurrentPage(1);
+    };
+
+    const handleStatusFilterChange = (value: 'all' | BillingRecord['status']) => {
+      setStatusFilter(value);
+      setCurrentPage(1);
+    };
+
+    const handleDueFilterChange = (value: 'all' | 15 | 30) => {
+      setDueFilter(value);
+      setCurrentPage(1);
+    };
+
+    const handleMonthFilterChange = (value: 'all' | number) => {
+      setMonthFilter(value);
+      setCurrentPage(1);
+    };
+
     // Handlers for modals
     const handleMarkAsPaid = (record: BillingRecord) => {
       setSelectedRecord(record);
@@ -88,7 +117,7 @@
       setCurrentPage,
       paginatedItems,
       totalPages
-    } = usePagination(filteredRecords, 10, [searchTerm, statusFilter, dueFilter, monthFilter]);
+    } = usePagination(filteredRecords, 10);
 
     return (
       <div className="space-y-6">
@@ -98,13 +127,13 @@
         {/* Search & Filters */}
         <BillingSearch
           searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          setSearchTerm={handleSearchChange}
           statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
+          setStatusFilter={handleStatusFilterChange}
           dueFilter={dueFilter}
-          setDueFilter={setDueFilter}
+          setDueFilter={handleDueFilterChange}
           monthFilter={monthFilter}
-          setMonthFilter={setMonthFilter}
+          setMonthFilter={handleMonthFilterChange}
         />
 
         {/* Billing Table */}

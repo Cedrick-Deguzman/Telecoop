@@ -95,7 +95,7 @@ export async function GET() {
       include: { clients: true }, // include related clients
     });
 
-    const planDistribution = plans.map((plan) => ({
+    const planDistribution = plans.map((plan: (typeof plans)[number]) => ({
       name: plan.name,
       clients: plan.clients.length,
       color: plan.color || "#9ca3af",
@@ -108,7 +108,7 @@ export async function GET() {
       include: { client: true },
     });
 
-    const recentActivity = recentPayments.map((p) => ({
+    const recentActivity = recentPayments.map((p: (typeof recentPayments)[number]) => ({
       id: p.id,
       client: p.client?.name ?? "Unknown",
       action: "Payment received",

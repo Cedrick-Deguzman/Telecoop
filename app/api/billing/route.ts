@@ -36,7 +36,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const formatted = invoices.map(inv => {
+    const formatted = invoices.map((inv: (typeof invoices)[number]) => {
       let status = inv.status;
 
       // Auto-mark as overdue if past due

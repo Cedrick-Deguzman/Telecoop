@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Wifi, Zap, Crown, Rocket } from 'lucide-react';
-import { PlanType } from '../types';
-import { totalmem } from 'os';
+import { PlanType, PlanColorClasses } from '../types';
 
 export function usePlans() {
   const [plans, setPlans] = useState<PlanType[]>([]);
@@ -27,7 +26,7 @@ export function usePlans() {
     { label: "Rocket", value: "rocket", component: Rocket },
   ];
 
-  const colorClasses = {
+  const colorClasses: PlanColorClasses = {
     indigo: { bg: 'bg-indigo-50', iconBg: 'bg-indigo-100', icon: 'text-indigo-600', border: 'border-indigo-200', button: 'bg-indigo-600 hover:bg-indigo-700' },
     purple: { bg: "bg-purple-50", border: "border-purple-300", text: "text-purple-600", button: "bg-purple-600 hover:bg-purple-700" },
     pink: { bg: 'bg-pink-50', iconBg: 'bg-pink-100', icon: 'text-pink-600', border: 'border-pink-200', button: 'bg-pink-600 hover:bg-pink-700' },
@@ -63,7 +62,7 @@ export function usePlans() {
 
     const savedPlan = await res.json();
     const clients = savedPlan.clients || [];
-    const activeClients = clients.filter((c: any) => c.status === "ACTIVE");
+    const activeClients = clients.filter((c: (typeof clients)[number]) => c.status === "ACTIVE");
    
     const normalizedPlan = {
       ...savedPlan,

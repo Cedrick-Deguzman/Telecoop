@@ -13,9 +13,9 @@ export function usePayments() {
         if (!res.ok) throw new Error('Failed to fetch payments');
         const data: PaymentRecord[] = await res.json(); // make sure API returns PaymentRecord format
         setPayments(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
-        setError(err.message || 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }

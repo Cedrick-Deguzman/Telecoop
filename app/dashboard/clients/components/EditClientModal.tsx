@@ -4,7 +4,18 @@ import { Client, Plan, Napbox } from '../types';
 import { FormInput } from '@/app/components/ui/FormInput';
 import { FormSelect } from '@/app/components/ui/FormSelect';
 import { useClientsPorts } from '../hooks/useClientPorts';
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
+
+type ClientUpdatePayload = {
+  id: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  planId: number | null;
+  status: Client["status"];
+  napboxId?: number;
+  portNumber?: number;
+};
 
 interface EditClientModalProps {
   client: Client;
@@ -41,7 +52,7 @@ export default function EditClientModal({
 
     const form = new FormData(e.currentTarget);
 
-    const payload: any = {
+    const payload: ClientUpdatePayload = {
       id: client.id,
       name: form.get('name')?.toString(),
       email: form.get('email')?.toString(),
@@ -178,7 +189,7 @@ export default function EditClientModal({
               label: n.name,
             }))}
             value={selectedNapboxId ?? ""}
-            onChange={(e: any) => {
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
               setSelectedNapboxId(Number(e.target.value));
               setSelectedPortNumber(null); // reset port when napbox changes
             }}
@@ -194,7 +205,7 @@ export default function EditClientModal({
               label: `Port ${p.portNumber}`,
             }))}
             value={selectedPortNumber ?? ""}
-            onChange={(e: any) =>
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
               setSelectedPortNumber(Number(e.target.value))
             }
             placeholder={selectedNapboxId ? "Select Port" : "Select Napbox first"}

@@ -16,7 +16,7 @@ export async function GET() {
       },
     });
 
-    const formatted = plans.map((plan) => ({
+    const formatted = plans.map((plan: (typeof plans)[number]) => ({
       id: plan.id,
       name: plan.name,
       speed: plan.speed,

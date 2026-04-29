@@ -45,7 +45,25 @@ export function useClients(): UseClientsReturn {
   };
 
   useEffect(() => {
-    refreshAll();
+    async function loadInitialData() {
+      const [clientsRes, plansRes, napboxesRes] = await Promise.all([
+        fetch('/api/clients/list'),
+        fetch('/api/plans'),
+        fetch('/api/napboxes'),
+      ]);
+
+      const [clientsData, plansData, napboxesData] = await Promise.all([
+        clientsRes.json(),
+        plansRes.json(),
+        napboxesRes.json(),
+      ]);
+
+      setClients(clientsData);
+      setPlans(plansData);
+      setNapboxes(napboxesData);
+    }
+
+    void loadInitialData();
   }, []);
 
   /* -------------------------------------------- */

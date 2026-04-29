@@ -1,4 +1,4 @@
-import { Box, Wifi, WifiOff, User } from 'lucide-react';
+import { Box, Wifi, WifiOff, User, type LucideIcon } from 'lucide-react';
 
 interface Stats {
   totalNapBoxes: number;
@@ -19,12 +19,12 @@ export function NapBoxesStats({ stats }: { stats: Stats }) {
 }
 
 function Stat({
-  icon: Icon,
+ icon: Icon,
   label,
   value,
   color,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: number;
   color: string;

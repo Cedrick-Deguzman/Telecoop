@@ -21,9 +21,9 @@ export async function GET() {
     });
 
     // Map ports to include clientName, clientPlan, connectedSince
-    const mappedNapboxes = napboxes.map(napbox => ({
+    const mappedNapboxes = napboxes.map((napbox: (typeof napboxes)[number]) => ({
       ...napbox,
-      ports: napbox.ports.map(port => ({
+      ports: napbox.ports.map((port: (typeof napbox.ports)[number]) => ({
         portNumber: port.portNumber,
         status: port.status,
         clientId: port.clientId,

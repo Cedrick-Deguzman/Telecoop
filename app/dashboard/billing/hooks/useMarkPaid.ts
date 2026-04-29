@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PaymentRecord } from '../types';
 import { BillingRecord } from '../types';
 import { MarkPaidPayload } from '../types';
 
@@ -8,7 +7,6 @@ export function useMarkPaid() {
   const [pendingPayment, setPendingPayment] = useState<MarkPaidPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null);
 
   // Confirm marking a record as paid
   // inside useMarkPaid.ts
@@ -43,8 +41,8 @@ export function useMarkPaid() {
 
       return true;
 
-    } catch (err: any) {
-      setError(err.message || 'Unknown error');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
       return false;
     } finally {
       setLoading(false);

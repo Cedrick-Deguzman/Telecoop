@@ -1,21 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export function usePagination<T>(
   items: T[],
-  rowsPerPage: number,
-  dependencies: any[] = []
+  rowsPerPage: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, dependencies);
-
-  const startIndex = (currentPage - 1) * rowsPerPage;
+  const totalPages = Math.max(1, Math.ceil(items.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedItems = items.slice(startIndex, endIndex);
-
-  const totalPages = Math.ceil(items.length / rowsPerPage);
-
-  return { currentPage, setCurrentPage, paginatedItems, totalPages };
+  return { currentPage: safeCurrentPage, setCurrentPage, paginatedItems, totalPages };
 }

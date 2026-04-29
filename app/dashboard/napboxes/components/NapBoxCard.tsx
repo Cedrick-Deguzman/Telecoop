@@ -1,6 +1,14 @@
 import { MapPin } from 'lucide-react';
 import { NapBox } from '../types';
 
+type StatColor = 'green' | 'blue' | 'red';
+
+interface StatProps {
+  label: string;
+  value: number;
+  color: StatColor;
+}
+
 export function NapBoxCard({
   napBox,
   onViewPorts,
@@ -69,7 +77,7 @@ export function NapBoxCard({
   );
 }
 
-function Stat({ label, value, color }: any) {
+function Stat({ label, value, color }: StatProps) {
   return (
     <div className={`bg-${color}-50 p-3 rounded`}>
       <p className={`text-2xl text-${color}-600`}>{value}</p>

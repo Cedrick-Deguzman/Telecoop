@@ -16,9 +16,9 @@ export async function GET() {
     });
 
     // Map 'payment' to 'payments' to match frontend
-    const formatted = clients.map((c) => ({
+    const formatted = clients.map((c: (typeof clients)[number]) => ({
       ...c,
-      payments: c.payment.map((p) => ({
+      payments: c.payment.map((p: (typeof c.payment)[number]) => ({
         paymentDate: p.paymentDate,
         amount: p.amount,
       })),

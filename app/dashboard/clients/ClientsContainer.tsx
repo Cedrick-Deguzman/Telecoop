@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import ClientsTable from './components/ClientsTable';
 import ClientSearch from './components/ClientSearch';
 import AddClientModal from './components/AddClientModal';
