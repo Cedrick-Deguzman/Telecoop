@@ -9,9 +9,10 @@ function generateOTP() {
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password;
 
-    // 1️⃣ Validate input
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Missing credentials' },
@@ -19,12 +20,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2️⃣ Find user
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
-    // ❌ Do NOT reveal which one is wrong
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -32,7 +31,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3️⃣ Verify password FIRST
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
@@ -42,7 +40,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4️⃣ OPTIONAL: Restrict to admins
     if (user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -50,12 +47,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5️⃣ Cleanup old OTPs
     await prisma.emailOTP.deleteMany({
       where: { email },
     });
 
-    // 6️⃣ Generate & hash OTP
     const otp = generateOTP();
     const otpHash = await bcrypt.hash(otp, 10);
 
@@ -63,19 +58,18 @@ export async function POST(req: Request) {
       data: {
         email,
         otpHash,
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       },
     });
 
-    // 7️⃣ Send OTP email
     await transporter.sendMail({
       to: email,
       subject: 'Your Telecoop OTP Code',
       html: `
         <h2>Your Telecoop OTP</h2>
         <h1>${otp}</h1>
-        <p>Expires in 5 minutes</p>
-        <p>If you did not request this, please ignore.</p>
+        <p>Expires in 5 minutes.</p>
+        <p>If you did not request this, please ignore this email.</p>
       `,
     });
 

@@ -14,18 +14,21 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const email = credentials?.email?.trim().toLowerCase();
+        const password = credentials?.password;
+
+        if (!email || !password) {
           return null;
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
 
         if (!user) return null;
 
         const isValid = await bcrypt.compare(
-          credentials.password,
+          password,
           user.password
         );
 
@@ -54,11 +57,9 @@ export const authOptions = {
       baseUrl: string;
     }) {
       try {
-        // Make relative URLs absolute using the request's origin
         const target = new URL(url, baseUrl);
         return `${target.origin}${target.pathname}`;
       } catch {
-        // fallback to baseUrl if URL parsing fails
         return baseUrl;
       }
     },

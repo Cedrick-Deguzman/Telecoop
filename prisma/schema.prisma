@@ -147,3 +147,14 @@ model EmailOTP {
   @@index([email])
   @@map("emailotp")
 }
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  tokenHash String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("passwordresettoken")
+}
