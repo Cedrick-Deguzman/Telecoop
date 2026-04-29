@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const formattedInvoices = invoices.map(inv => ({
+    const formattedInvoices = invoices.map((inv: (typeof invoices)[number]) => ({
         id: inv.id,
         clientId: inv.clientId,
         clientName: inv.client.name, // optional
