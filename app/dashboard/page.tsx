@@ -51,6 +51,18 @@ export default function Dashboard() {
   const formatCurrency = (value: number) =>
     `₱${value?.toLocaleString("en-PH", { minimumFractionDigits: 0 })}`;
 
+  const formatManilaDateTime = (value: string) =>
+    new Date(value).toLocaleString("en-PH", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
   if (loading) {
     return <DashboardSkeleton />;
   }
@@ -197,7 +209,7 @@ export default function Dashboard() {
                 </div>
                 <div className="text-right">
                   <p>{activity.amount}</p>
-                  <p className="text-sm text-gray-500">{activity.time}</p>
+                  <p className="text-sm text-gray-500">{formatManilaDateTime(activity.time)}</p>
                 </div>
               </div>
             ))}

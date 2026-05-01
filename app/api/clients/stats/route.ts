@@ -115,7 +115,7 @@ export async function GET() {
       client: p.client?.name ?? "Unknown",
       action: "Payment received",
       amount: `₱${p.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-      time: p.paymentDate.toLocaleString(),
+      time: p.paymentDate.toISOString(),
     }));
 
     return NextResponse.json({
