@@ -10,6 +10,7 @@ interface FormInputProps {
   required?: boolean;
   defaultValue?: string | number;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -19,6 +20,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   required = false,
   defaultValue,
   placeholder,
+  disabled = false,
 }) => {
   return (
     <div>
@@ -29,7 +31,8 @@ export const FormInput: React.FC<FormInputProps> = ({
         required={required}
         defaultValue={defaultValue}
         placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+        disabled={disabled}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
       />
     </div>
   );

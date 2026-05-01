@@ -40,6 +40,7 @@ export default function EditClientModal({
     availablePorts,
   } = useClientsPorts({ napboxes, selectedClient: client });
   const [status, setStatus] = useState<Client["status"]>(client.status);
+  const [isSaving, setIsSaving] = useState(false);
   const lastNapboxName = napboxes.find(
     (n) => n.id === client.lastNapboxId
   )?.name;
@@ -49,6 +50,7 @@ export default function EditClientModal({
   /* -------------------------------------------- */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSaving(true);
 
     const form = new FormData(e.currentTarget);
 
@@ -82,6 +84,7 @@ export default function EditClientModal({
 
       if (!res.ok) {
         alert(data.error || 'Failed to update client');
+        setIsSaving(false);
         return;
       }
 
@@ -90,6 +93,7 @@ export default function EditClientModal({
     } catch (err) {
       console.error(err);
       alert('Error updating client');
+      setIsSaving(false);
     }
   };
 
@@ -107,6 +111,7 @@ export default function EditClientModal({
             label="Full Name"
             name="name"
             defaultValue={client.name}
+            disabled={isSaving}
           />
 
           <FormInput
@@ -114,12 +119,14 @@ export default function EditClientModal({
             name="email"
             type="email"
             defaultValue={client.email}
+            disabled={isSaving}
           />
 
           <FormInput
             label="Phone"
             name="phone"
             defaultValue={client.phone}
+            disabled={isSaving}
           />
 
           <FormSelect
@@ -130,6 +137,7 @@ export default function EditClientModal({
               label: p.name,
             }))}
             defaultValue={client.planId}
+            disabled={isSaving}
           />
 
           <div>
@@ -148,7 +156,8 @@ export default function EditClientModal({
                   setSelectedPortNumber(null);
                 }
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              disabled={isSaving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -158,10 +167,10 @@ export default function EditClientModal({
           {client.lastNapboxId && client.lastPortNumber && (
             <button
               type="button"
-              disabled={status !== "active"}
+              disabled={status !== "active" || isSaving}
               className={`mt-2 w-full px-3 py-2 rounded text-sm text-white
                 ${
-                  status === "active"
+                  status === "active" && !isSaving
                     ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
@@ -183,7 +192,7 @@ export default function EditClientModal({
          <FormSelect
             label="Napbox"
             name="napboxId"
-            disabled={status === "inactive"}
+            disabled={status === "inactive" || isSaving}
             options={napboxes.map((n) => ({
               value: n.id,
               label: n.name,
@@ -199,7 +208,7 @@ export default function EditClientModal({
           <FormSelect
             label="Port Number"
             name="portNumber"
-            disabled={status === "inactive" || !selectedNapboxId}
+            disabled={status === "inactive" || !selectedNapboxId || isSaving}
             options={availablePorts.map((p) => ({
               value: p.portNumber,
               label: `Port ${p.portNumber}`,
@@ -216,12 +225,17 @@ export default function EditClientModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              disabled={isSaving}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
-            <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              Update Client
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+            >
+              {isSaving ? 'Updating Client...' : 'Update Client'}
             </button>
           </div>
         </form>
