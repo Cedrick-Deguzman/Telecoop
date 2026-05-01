@@ -23,7 +23,7 @@ export type PlanType = {
   color: "indigo" | "purple" | "pink" | "amber";
   features: string[];
   clients: PlanClient[];
-  isActive?: number;
+  isActive?: boolean;
   subscribers: number;
   icon: string;
 };

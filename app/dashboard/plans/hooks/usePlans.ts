@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react';
 import { Wifi, Zap, Crown, Rocket } from 'lucide-react';
 import { PlanType, PlanColorClasses } from '../types';
 
+type PlanUpdateOptions = {
+  updateExistingClients: boolean;
+};
+
 export function usePlans() {
   const [plans, setPlans] = useState<PlanType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,17 +54,23 @@ export function usePlans() {
   const handleManagePlan = (plan: PlanType) => {
     setSelectedPlan(plan);
     setEditingFeatures([...plan.features]);
-    setPlanStatus(plan.isActive === 1 ? 'true' : 'false');
+    setPlanStatus(plan.isActive ? 'true' : 'false');
     setShowManageModal(true);
   };
 
-  const handleUpdatePlan = async (updatedPlan: PlanType) => {
+  const handleUpdatePlan = async (
+    updatedPlan: PlanType,
+    options: PlanUpdateOptions
+  ) => {
     
   try {
     const res = await fetch("/api/plans", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedPlan),
+      body: JSON.stringify({
+        ...updatedPlan,
+        updateExistingClients: options.updateExistingClients,
+      }),
     });
 
     if (!res.ok) throw new Error("Failed to update plan");
@@ -75,6 +85,7 @@ export function usePlans() {
       ...savedPlan,
       clients,
       subscribers: activeClients.length,
+      isActive: Boolean(savedPlan.isActive),
     };
 
     setPlans(prev => prev.map(p => p.id === normalizedPlan.id ? normalizedPlan : p));

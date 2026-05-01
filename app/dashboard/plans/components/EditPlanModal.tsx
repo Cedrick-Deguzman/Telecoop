@@ -7,18 +7,23 @@ interface EditPlanModalProps {
   plan: PlanType | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedPlan: PlanType) => void;
+  onUpdate: (
+    updatedPlan: PlanType,
+    options: { updateExistingClients: boolean }
+  ) => void;
   totalSubscribers: number;
 }
 
 export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscribers }: EditPlanModalProps) {
   const [editingFeatures, setEditingFeatures] = React.useState<string[]>(plan?.features || []);
-  const [planStatus, setPlanStatus] = React.useState(plan?.isActive === 1 ? 'true' : 'false');
+  const [planStatus, setPlanStatus] = React.useState(plan?.isActive ? 'true' : 'false');
+  const [updateExistingClients, setUpdateExistingClients] = React.useState(false);
 
   React.useEffect(() => {
     if (plan) {
       setEditingFeatures(plan.features);
-      setPlanStatus(plan.isActive === 1 ? 'true' : 'false');
+      setPlanStatus(plan.isActive ? 'true' : 'false');
+      setUpdateExistingClients(false);
     }
   }, [plan]);
 
@@ -30,7 +35,10 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate({ ...plan, features: editingFeatures, isActive: planStatus === 'true' ? 1 : 0 });
+    onUpdate(
+      { ...plan, features: editingFeatures, isActive: planStatus === 'true' },
+      { updateExistingClients }
+    );
     onClose();
   };
 
@@ -64,8 +72,8 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
             <div>
               <label className="block text-sm mb-2 text-gray-700">Status</label>
               <select name="isActive" value={planStatus} onChange={e => setPlanStatus(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <option value="1">Active</option>
-                <option value="0">Inactive</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
               </select>
             </div>
           </div>
@@ -86,6 +94,20 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
                 </div>
             </div>
           </div>
+          <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-4">
+            <input
+              type="checkbox"
+              checked={updateExistingClients}
+              onChange={(e) => setUpdateExistingClients(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <div>
+              <p className="text-sm text-gray-900">Also update existing clients on this plan</p>
+              <p className="text-sm text-gray-500">
+                This syncs the stored monthly fee for current subscribers to the edited plan price.
+              </p>
+            </div>
+          </label>
           <div>
             <div className="flex justify-between items-center mb-3">
               <label className="block text-sm text-gray-700">Plan Features</label>

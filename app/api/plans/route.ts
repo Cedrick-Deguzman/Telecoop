@@ -54,6 +54,7 @@ export async function PUT(req: NextRequest) {
       features,
       color,
       icon,
+      updateExistingClients,
     } = body;
 
     if (!id) {
@@ -67,21 +68,32 @@ export async function PUT(req: NextRequest) {
     const featuresArray =
       Array.isArray(features) ? features : [];
 
-    // Update plan
-    const updated = await prisma.plan.update({
-      where: { id },
-      data: {
-        name,
-        speed,
-        price: Number(price),
-        isActive:
-          isActive === "true" ||
-          isActive === true,
-        features: featuresArray,
-        color,
-        icon,
-      },
-      include: { clients: true },
+    const parsedPrice = Number(price);
+    const nextIsActive = isActive === "true" || isActive === true;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const savedPlan = await tx.plan.update({
+        where: { id },
+        data: {
+          name,
+          speed,
+          price: parsedPrice,
+          isActive: nextIsActive,
+          features: featuresArray,
+          color,
+          icon,
+        },
+        include: { clients: true },
+      });
+
+      if (updateExistingClients === true) {
+        await tx.client.updateMany({
+          where: { planId: id },
+          data: { monthlyFee: parsedPrice },
+        });
+      }
+
+      return savedPlan;
     });
 
     return NextResponse.json(updated);
