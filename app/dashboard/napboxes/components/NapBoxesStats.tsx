@@ -1,19 +1,21 @@
-import { Box, Wifi, WifiOff, User, type LucideIcon } from 'lucide-react';
+import { Box, Wifi, WifiOff, User, Wrench, type LucideIcon } from 'lucide-react';
 
 interface Stats {
   totalNapBoxes: number;
   totalPorts: number;
   totalAvailable: number;
   totalOccupied: number;
+  totalReserved: number;
 }
 
 export function NapBoxesStats({ stats }: { stats: Stats }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
       <Stat icon={Box} label="Total NAP Boxes" value={stats.totalNapBoxes} color="indigo" />
       <Stat icon={Wifi} label="Total Ports" value={stats.totalPorts} color="purple" />
       <Stat icon={WifiOff} label="Available Ports" value={stats.totalAvailable} color="green" />
       <Stat icon={User} label="Occupied Ports" value={stats.totalOccupied} color="blue" />
+      <Stat icon={Wrench} label="Internal/Test Ports" value={stats.totalReserved} color="amber" />
     </div>
   );
 }

@@ -15,17 +15,19 @@ export function useNapBoxes() {
         const data: NapBox[] = await res.json();
 
         const normalized = data.map(napBox => {
+          const availablePorts = napBox.ports.filter(p => p.status === 'available').length;
           const occupiedPorts = napBox.ports.filter(p => p.status === 'occupied').length;
-          const faultyPorts = napBox.ports.filter(
-            p => p.status === 'faulty'
-          ).length;
+          const faultyPorts = napBox.ports.filter(p => p.status === 'faulty').length;
+          const internalUsePorts = napBox.ports.filter(p => p.status === 'internal_use').length;
+          const testLinePorts = napBox.ports.filter(p => p.status === 'test_line').length;
 
           return {
             ...napBox,
+            availablePorts,
             occupiedPorts,
             faultyPorts,
-            availablePorts:
-              napBox.totalPorts - occupiedPorts - faultyPorts,
+            internalUsePorts,
+            testLinePorts,
           };
         });
 
@@ -51,6 +53,7 @@ export function useNapBoxes() {
     totalPorts: napBoxes.reduce((s, n) => s + n.totalPorts, 0),
     totalAvailable: napBoxes.reduce((s, n) => s + n.availablePorts, 0),
     totalOccupied: napBoxes.reduce((s, n) => s + n.occupiedPorts, 0),
+    totalReserved: napBoxes.reduce((s, n) => s + n.internalUsePorts + n.testLinePorts, 0),
   };
 
   return {

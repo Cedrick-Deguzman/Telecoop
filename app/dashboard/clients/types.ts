@@ -30,7 +30,7 @@ export interface Plan {
 export interface NapboxPort {
   napboxId: number;
   portNumber: number;
-  status: "available" | "occupied" | "faulty";
+  status: "available" | "occupied" | "faulty" | "internal_use" | "test_line";
   clientId?: number | null;
 }
 

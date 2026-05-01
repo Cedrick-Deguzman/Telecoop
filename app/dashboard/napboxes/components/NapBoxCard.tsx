@@ -1,7 +1,7 @@
 import { MapPin } from 'lucide-react';
 import { NapBox } from '../types';
 
-type StatColor = 'green' | 'blue' | 'red';
+type StatColor = 'green' | 'blue' | 'red' | 'amber' | 'purple';
 
 interface StatProps {
   label: string;
@@ -49,12 +49,12 @@ export function NapBoxCard({
           <div className='mb-3'>
             <div className="flex justify-between text-sm text-gray-600 mb-2">
                 <span>Port Utilization</span>
-                <span>{Math.round((napBox.occupiedPorts / napBox.totalPorts) * 100)}%</span>
+                <span>{Math.round((((napBox.occupiedPorts + napBox.internalUsePorts + napBox.testLinePorts) / napBox.totalPorts) || 0) * 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                 className="bg-indigo-600 h-2 rounded-full"
-                style={{ width: `${(napBox.occupiedPorts / napBox.totalPorts) * 100}%` }}
+                style={{ width: `${(((napBox.occupiedPorts + napBox.internalUsePorts + napBox.testLinePorts) / napBox.totalPorts) || 0) * 100}%` }}
                 ></div>
             </div>
           </div>
@@ -63,6 +63,8 @@ export function NapBoxCard({
             <div className="text-sm text-gray-600 space-y-1">
             <p>Total Ports: {napBox.totalPorts}</p>
             <p>Installed: {napBox.installDate.split('T')[0]}</p>
+            <p>Internal Use: {napBox.internalUsePorts}</p>
+            <p>Test Line: {napBox.testLinePorts}</p>
             </div>
         </div>
 

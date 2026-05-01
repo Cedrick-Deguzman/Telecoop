@@ -47,7 +47,16 @@ export function NapBoxesContainer() {
       />
 
       {showPorts && selectedNapBox && (
-        <PortsModal napBox={selectedNapBox} onClose={() => setShowPorts(false)} />
+        <PortsModal
+          napBox={selectedNapBox}
+          onClose={() => setShowPorts(false)}
+          onUpdated={(updatedNapBox) => {
+            setSelectedNapBox(updatedNapBox);
+            setNapBoxes((prev) =>
+              prev.map((napBox) => (napBox.id === updatedNapBox.id ? updatedNapBox : napBox))
+            );
+          }}
+        />
       )}
 
       {showAddEdit && (

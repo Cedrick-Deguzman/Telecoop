@@ -6,6 +6,9 @@ export async function GET() {
     const napboxes = await prisma.napbox.findMany({
       include: {
         ports: {
+          orderBy: {
+            portNumber: 'asc',
+          },
           include: {
             client: {
               select: {
@@ -24,6 +27,7 @@ export async function GET() {
     const mappedNapboxes = napboxes.map((napbox: (typeof napboxes)[number]) => ({
       ...napbox,
       ports: napbox.ports.map((port: (typeof napbox.ports)[number]) => ({
+        id: port.id,
         portNumber: port.portNumber,
         status: port.status,
         clientId: port.clientId,
