@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { CheckCircle, Download } from 'lucide-react';
 import { BillingRecord } from '../types';
+import { formatCurrency, formatShortDate, formatPaymentMethod } from '@/app/utils/format';
 
 interface InvoiceModalProps {
   invoice: BillingRecord | null;
@@ -9,151 +11,174 @@ interface InvoiceModalProps {
   onClose: () => void;
 }
 
-export function InvoiceModal({
-  invoice,
-  isOpen,
-  onClose,
-}: InvoiceModalProps) {
+export function InvoiceModal({ invoice, isOpen, onClose }: InvoiceModalProps) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
+
   if (!isOpen || !invoice) return null;
 
   const handleDownloadPDF = async () => {
-    const invoice = document.getElementById("invoice-pdf");
-    if (!invoice) return;
+    const invoiceElement = document.getElementById('invoice-pdf');
+    if (!invoiceElement) return;
 
-    const htmlContent = invoice.outerHTML;
+    setDownloading(true);
+    setDownloadError('');
 
-    const response = await fetch("/api/billing/invoice-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceHtml: htmlContent, fileName: `Invoice-${invoice.id}` }),
-    });
+    try {
+      const htmlContent = invoiceElement.outerHTML;
+      const response = await fetch('/api/billing/invoice-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceHtml: htmlContent, fileName: `Invoice-${invoice.id}` }),
+      });
 
-    if (!response.ok) return alert("Failed to generate PDF");
+      if (!response.ok) {
+        setDownloadError('Failed to generate PDF. Please try again.');
+        setDownloading(false);
+        return;
+      }
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Invoice-${invoice.id}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${invoice.id}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
-    <div id="invoice-pdf" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Invoice Header */}
-        <div className="flex justify-between items-start mb-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <div
+        id="invoice-pdf"
+        className="shell-panel-strong max-h-[90vh] w-full max-w-3xl overflow-y-auto p-8"
+      >
+        <div className="mb-8 flex flex-col gap-6 border-b border-slate-200/70 pb-8 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-3xl mb-2">INVOICE</h2>
-            <p className="text-gray-600">Invoice #INV-{invoice.id.toString().padStart(6, '0')}</p>
+            <p className="section-kicker">Invoice</p>
+            <h2 className="mt-2 text-4xl text-slate-950">INV-{invoice.id.toString().padStart(6, '0')}</h2>
+            <p className="mt-2 text-sm text-slate-500">Telecoop monthly internet service billing statement</p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl text-red-900">Telecoop</p>
-            <p className="text-sm text-gray-600">Internet Service Provider</p>
-            <p className="text-sm text-gray-600">Rm.3 2Flr Klir-Con Bldg., Rocka Complex, Rocka Ave., Tabang, Plaridel, Bulacan</p>
-            <p className="text-sm text-gray-600">Plaridel, Philippines, 3004</p>
+          <div className="rounded-[1.6rem] bg-[linear-gradient(135deg,#0b1f3b_0%,#173b72_100%)] px-6 py-5 text-right text-white shadow-lg">
+            <p className="text-2xl">Telecoop</p>
+            <p className="mt-2 text-sm text-slate-100">Internet Service Provider</p>
+            <p className="mt-3 max-w-xs text-sm leading-6 text-slate-200">
+              Rm.3 2Flr Klir-Con Bldg., Rocka Complex, Rocka Ave., Tabang, Plaridel, Bulacan
+            </p>
+            <p className="text-sm text-slate-200">Plaridel, Philippines, 3004</p>
           </div>
         </div>
 
-         {/* Invoice Details */}
-        <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b">
-          <div>
-            <p className="text-sm text-gray-600 mb-1">Bill To:</p>
-            <p className="mb-1">{invoice.clientName}</p>
-            <p className="text-sm text-gray-600">{invoice.email}</p>
-            <p className="text-sm text-gray-600">Client ID: {invoice.clientId}</p>
+        <div className="mb-8 grid gap-6 border-b border-slate-200/70 pb-8 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Bill To</p>
+            <p className="mt-3 text-lg font-semibold text-slate-950">{invoice.clientName}</p>
+            <p className="mt-1 text-sm text-slate-500">{invoice.email}</p>
+            <p className="mt-4 text-sm text-slate-500">Client ID: {invoice.clientId}</p>
           </div>
-          <div className="text-right">
-            <div className="mb-2">
-              <p className="text-sm text-gray-600">Issue Date</p>
-              <p>{invoice.billingDate.split('T')[0]}</p>
-            </div>
-            <div className="mb-2">
-              <p className="text-sm text-gray-600">Due Date</p>
-              <p>{invoice.dueDate.split('T')[0]}</p>
-            </div>
-            {invoice.paidDate && (
+
+          <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-5">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-gray-600">Paid Date</p>
-                <p className="text-green-600">{invoice.paidDate.split('T')[0]}</p>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Issue Date</p>
+                <p className="mt-2 text-sm text-slate-900">{formatShortDate(invoice.billingDate)}</p>
               </div>
-            )}
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Due Date</p>
+                <p className="mt-2 text-sm text-slate-900">{formatShortDate(invoice.dueDate)}</p>
+              </div>
+              {invoice.paidDate && (
+                <div className="sm:col-span-2">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Paid Date</p>
+                  <p className="mt-2 text-sm text-emerald-700">{formatShortDate(invoice.paidDate)}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Invoice Items */}
-        <table className="w-full mb-8">
-          <thead className="border-b-2 border-gray-300">
-            <tr>
-              <th className="text-left py-3 text-gray-600">Description</th>
-              <th className="text-right py-3 text-gray-600">Quantity</th>
-              <th className="text-right py-3 text-gray-600">Rate</th>
-              <th className="text-right py-3 text-gray-600">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="py-4">
-                <p>{invoice.plan}</p>
-                <p className="text-sm text-gray-600">Monthly Internet Service</p>
-              </td>
-              <td className="text-right py-4">1</td>
-              <td className="text-right py-4">₱{invoice.amount.toFixed(2)}</td>
-              <td className="text-right py-4">₱{invoice.amount.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200/80">
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Description</th>
+                <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Quantity</th>
+                <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Rate</th>
+                <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              <tr className="border-t border-slate-200/70">
+                <td className="px-5 py-4">
+                  <p className="font-semibold text-slate-900">{invoice.plan}</p>
+                  <p className="mt-1 text-sm text-slate-500">Monthly Internet Service</p>
+                </td>
+                <td className="px-5 py-4 text-right text-slate-700">1</td>
+                <td className="px-5 py-4 text-right text-slate-700">{formatCurrency(invoice.amount)}</td>
+                <td className="px-5 py-4 text-right font-semibold text-slate-900">{formatCurrency(invoice.amount)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        {/* Invoice Totals */}
         <div className="mb-8">
-          <div className="w-64 ml-auto">
-            <div className="flex justify-between py-2">
-              <span className="text-gray-600">Subtotal:</span>
-              <span>₱{invoice.amount.toFixed(2)}</span>
+          <div className="ml-auto w-full max-w-sm rounded-2xl border border-slate-200/80 bg-white/80 p-5">
+            <div className="flex items-center justify-between py-2 text-sm text-slate-600">
+              <span>Subtotal</span>
+              <span>{formatCurrency(invoice.amount)}</span>
             </div>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-600">Tax (0%):</span>
-              <span>₱0.00</span>
+            <div className="flex items-center justify-between py-2 text-sm text-slate-600">
+              <span>Tax (0%)</span>
+              <span>{formatCurrency(0)}</span>
             </div>
-            <div className="flex justify-between py-3 border-t-2 border-gray-300">
-              <span>Total:</span>
-              <span className="text-2xl">₱{invoice.amount.toFixed(2)}</span>
+            <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-4">
+              <span className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Total</span>
+              <span className="text-2xl text-slate-950">{formatCurrency(invoice.amount)}</span>
             </div>
           </div>
         </div>
 
-        {/* Payment Status */}
         {invoice.paidDate && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="text-green-600" size={20} />
-              <span className="text-green-800">Payment Received</span>
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="text-emerald-600" size={20} />
+              <span className="font-semibold text-emerald-900">Payment Received</span>
             </div>
-            <p className="text-sm text-green-700">
-              Paid on {invoice.paidDate.split('T')[0]} via {invoice.paymentMethod}
+            <p className="mt-2 text-sm text-emerald-800">
+              Paid on {formatShortDate(invoice.paidDate)} via {formatPaymentMethod(invoice.paymentMethod)}
             </p>
           </div>
         )}
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500 mb-6">
-          <p>Thank you for your business!</p>
-          <p>For questions about this invoice, please contact +63 939-143-0094</p>
+        <div className="mb-6 text-center text-sm text-slate-500">
+          <p>Thank you for your business.</p>
+          <p>For invoice questions, please contact +63 939-143-0094.</p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+        {downloadError && (
+          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {downloadError}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          >
             Close
           </button>
           <button
             onClick={handleDownloadPDF}
-            className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-800"
+            disabled={downloading}
           >
-            <Download size={20} />
-            Download PDF
+            <Download size={18} />
+            {downloading ? 'Generating PDF...' : 'Download PDF'}
           </button>
         </div>
       </div>

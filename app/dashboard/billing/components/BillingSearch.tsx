@@ -23,32 +23,41 @@ export function BillingSearch({
   setMonthFilter,
 }: BillingSearchProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          size={20}
-        />
-        <input
-          type="text"
-          placeholder="Search by client name or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg
-                     focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
+    <div className="shell-panel p-5">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="max-w-2xl space-y-2">
+          <p className="section-kicker">Filters</p>
+          <h3 className="text-2xl text-slate-950">Refine the current billing cycle</h3>
+          <p className="text-sm text-slate-500">
+            Search by client, then narrow by payment status, billing month, or due-date window.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          <Download size={18} />
+          Export
+        </button>
       </div>
 
-      {/* Filters / Actions */}
-      <div className="flex gap-2">
+      <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,0.75fr))]">
+        <label className="relative block">
+          <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search by client name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-11 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+          />
+        </label>
+
         <select
           value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value as 'all' | BillingRecord['status'])
-          }
-          className="px-4 py-2 border border-gray-300 rounded-lg
-                     focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          onChange={(e) => setStatusFilter(e.target.value as 'all' | BillingRecord['status'])}
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
         >
           <option value="all">All Status</option>
           <option value="paid">Paid</option>
@@ -59,7 +68,7 @@ export function BillingSearch({
         <select
           value={monthFilter}
           onChange={(e) => setMonthFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
         >
           <option value="all">All Months</option>
           <option value={0}>January</option>
@@ -78,24 +87,13 @@ export function BillingSearch({
 
         <select
           value={dueFilter}
-          onChange={(e) => setDueFilter(e.target.value === 'all' ? 'all' : Number(e.target.value) as 15 | 30)}
-          className="px-4 py-2 border border-gray-300 rounded-lg
-                    focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          onChange={(e) => setDueFilter(e.target.value === 'all' ? 'all' : (Number(e.target.value) as 15 | 30))}
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
         >
           <option value="all">All Due Dates</option>
           <option value={15}>Due by 15</option>
           <option value={30}>End of Month</option>
         </select>
-
-        {/* Export (future feature) */}
-        <button
-          type="button"
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300
-                     rounded-lg hover:bg-gray-50 text-sm"
-        >
-          <Download size={18} />
-          Export
-        </button>
       </div>
     </div>
   );

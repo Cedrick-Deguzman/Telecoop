@@ -8,9 +8,17 @@ interface Stats {
   totalReserved: number;
 }
 
+const colorClasses: Record<string, { badge: string; icon: string }> = {
+  indigo: { badge: 'bg-indigo-100', icon: 'text-indigo-600' },
+  purple: { badge: 'bg-purple-100', icon: 'text-purple-600' },
+  green: { badge: 'bg-green-100', icon: 'text-green-600' },
+  blue: { badge: 'bg-blue-100', icon: 'text-blue-600' },
+  amber: { badge: 'bg-amber-100', icon: 'text-amber-600' },
+};
+
 export function NapBoxesStats({ stats }: { stats: Stats }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
       <Stat icon={Box} label="Total NAP Boxes" value={stats.totalNapBoxes} color="indigo" />
       <Stat icon={Wifi} label="Total Ports" value={stats.totalPorts} color="purple" />
       <Stat icon={WifiOff} label="Available Ports" value={stats.totalAvailable} color="green" />
@@ -21,7 +29,7 @@ export function NapBoxesStats({ stats }: { stats: Stats }) {
 }
 
 function Stat({
- icon: Icon,
+  icon: Icon,
   label,
   value,
   color,
@@ -31,11 +39,13 @@ function Stat({
   value: number;
   color: string;
 }) {
+  const classes = colorClasses[color] || colorClasses.indigo;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
       <div className="flex items-center gap-3">
-        <div className={`bg-${color}-100 p-3 rounded-full`}>
-          <Icon className={`text-${color}-600`} size={24} />
+        <div className={`${classes.badge} rounded-full p-3`}>
+          <Icon className={classes.icon} size={24} />
         </div>
         <div>
           <p className="text-gray-500">{label}</p>

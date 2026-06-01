@@ -1,5 +1,6 @@
 import { BillingRecord } from '../types';
-import { CheckCircle, Clock, AlertCircle, Calendar } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Calendar, Eye } from 'lucide-react';
+import { formatCurrency, formatPaymentMethod, formatShortDate } from '@/app/utils/format';
 
 interface BillingRowProps {
   record: BillingRecord;
@@ -7,98 +8,87 @@ interface BillingRowProps {
   onViewInvoice: (record: BillingRecord) => void;
 }
 
-export function BillingRow({ record, onMarkAsPaid, onViewInvoice }: BillingRowProps) {
-  console.log('BillingRow render:', record);
-  const getStatusColor = (status: BillingRecord['status']) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'overdue':
-        return 'bg-red-100 text-red-800';
-    }
-  };
+const statusMeta = {
+  paid: {
+    badge: 'bg-emerald-50 text-emerald-700',
+    icon: <CheckCircle className="text-emerald-600" size={18} />,
+  },
+  pending: {
+    badge: 'bg-amber-50 text-amber-700',
+    icon: <Clock className="text-amber-600" size={18} />,
+  },
+  overdue: {
+    badge: 'bg-rose-50 text-rose-700',
+    icon: <AlertCircle className="text-rose-600" size={18} />,
+  },
+};
 
-  const getStatusIcon = (status: BillingRecord['status']) => {
-    switch (status) {
-      case 'paid':
-        return <CheckCircle className="text-green-600" size={20} />;
-      case 'pending':
-        return <Clock className="text-yellow-600" size={20} />;
-      case 'overdue':
-        return <AlertCircle className="text-red-600" size={20} />;
-    }
-  };
+export function BillingRow({ record, onMarkAsPaid, onViewInvoice }: BillingRowProps) {
+  const meta = statusMeta[record.status];
 
   return (
-    <tr className="hover:bg-gray-50">
-      {/* Client */}
+    <tr className="transition hover:bg-slate-50/80">
       <td className="px-6 py-4">
-        <div>
-          <p>{record.clientName}</p>
-          <p className="text-sm text-gray-500">{record.email}</p>
+        <div className="space-y-1">
+          <p className="font-semibold text-slate-900">{record.clientName}</p>
+          <p className="text-sm text-slate-500">{record.email}</p>
         </div>
       </td>
 
-      {/* Plan */}
-      <td className="px-6 py-4 text-sm">{record.plan}</td>
+      <td className="px-6 py-4 text-sm text-slate-600">{record.plan}</td>
 
-      {/* Amount */}
-      <td className="px-6 py-4">₱{record.amount.toFixed(2)}</td>
-
-      {/* Billing Date */}
-      <td className="px-6 py-4 text-sm text-gray-600">{record.billingDate} - {record.dueDate}</td>
-
-      {/* Due Date */}
       <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Calendar size={16} className="text-gray-400" />
-          <span className={`text-sm ${record.status === 'overdue' ? 'text-red-600' : 'text-gray-600'}`}>
-            {record.dueDate}
+        <div className="text-sm font-semibold text-slate-900">{formatCurrency(record.amount)}</div>
+      </td>
+
+      <td className="px-6 py-4 text-sm text-slate-600">{formatShortDate(record.billingDate)}</td>
+
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar size={16} className="text-slate-400" />
+          <span className={record.status === 'overdue' ? 'text-rose-700' : 'text-slate-600'}>
+            {formatShortDate(record.dueDate)}
           </span>
         </div>
       </td>
 
-      {/* Status */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-2">
-          {getStatusIcon(record.status)}
-          <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(record.status)}`}>
-            {record.status}
-          </span>
+          {meta.icon}
+          <span className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${meta.badge}`}>{record.status}</span>
         </div>
       </td>
 
-      {/* Payment Info */}
       <td className="px-6 py-4 text-sm">
         {record.status === 'paid' ? (
-          <div>
-            <p className="text-green-600">Paid on {record.paidDate}</p>
-            <p className="text-gray-500">{record.paymentMethod}</p>
+          <div className="space-y-1">
+            <p className="font-medium text-emerald-700">Paid on {formatShortDate(record.paidDate)}</p>
+            <p className="text-slate-500">{formatPaymentMethod(record.paymentMethod)}</p>
           </div>
         ) : (
-          <span className="text-gray-400">Not paid yet</span>
+          <span className="text-slate-400">Not paid yet</span>
         )}
       </td>
 
-      {/* Actions */}
       <td className="px-6 py-4">
-        {record.status !== 'paid' ? (
-          <button
-            onClick={() => onMarkAsPaid(record)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-          >
-            Mark as Paid
-          </button>
-        ) : (
-          <button
-            onClick={() => onViewInvoice(record)}
-            className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 text-sm"
-          >
-            View Invoice
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {record.status !== 'paid' ? (
+            <button
+              onClick={() => onMarkAsPaid(record)}
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Mark as Paid
+            </button>
+          ) : (
+            <button
+              onClick={() => onViewInvoice(record)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <Eye size={16} />
+              View Invoice
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );

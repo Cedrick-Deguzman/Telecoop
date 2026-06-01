@@ -9,6 +9,14 @@ interface StatProps {
   color: StatColor;
 }
 
+const statColorClasses: Record<StatColor, { bg: string; text: string }> = {
+  green: { bg: 'bg-green-50', text: 'text-green-600' },
+  blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
+  red: { bg: 'bg-red-50', text: 'text-red-600' },
+  amber: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  purple: { bg: 'bg-purple-50', text: 'text-purple-600' },
+};
+
 export function NapBoxCard({
   napBox,
   onViewPorts,
@@ -32,9 +40,7 @@ export function NapBoxCard({
               <MapPin size={14} /> {napBox.location}
             </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-sm ${statusColor}`}>
-            {napBox.status}
-          </span>
+          <span className={`px-3 py-1 rounded-full text-sm ${statusColor}`}>{napBox.status}</span>
         </div>
       </div>
 
@@ -46,26 +52,30 @@ export function NapBoxCard({
         </div>
 
         <div>
-          <div className='mb-3'>
+          <div className="mb-3">
             <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Port Utilization</span>
-                <span>{Math.round((((napBox.occupiedPorts + napBox.internalUsePorts + napBox.testLinePorts) / napBox.totalPorts) || 0) * 100)}%</span>
+              <span>Port Utilization</span>
+              <span>
+                {Math.round(
+                  (((napBox.occupiedPorts + napBox.internalUsePorts + napBox.testLinePorts) / napBox.totalPorts) || 0) * 100,
+                )}
+                %
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
+              <div
                 className="bg-indigo-600 h-2 rounded-full"
                 style={{ width: `${(((napBox.occupiedPorts + napBox.internalUsePorts + napBox.testLinePorts) / napBox.totalPorts) || 0) * 100}%` }}
-                ></div>
+              ></div>
             </div>
           </div>
 
-            {/* Info */}
-            <div className="text-sm text-gray-600 space-y-1">
+          <div className="text-sm text-gray-600 space-y-1">
             <p>Total Ports: {napBox.totalPorts}</p>
             <p>Installed: {napBox.installDate.split('T')[0]}</p>
             <p>Internal Use: {napBox.internalUsePorts}</p>
             <p>Test Line: {napBox.testLinePorts}</p>
-            </div>
+          </div>
         </div>
 
         <button
@@ -80,9 +90,11 @@ export function NapBoxCard({
 }
 
 function Stat({ label, value, color }: StatProps) {
+  const classes = statColorClasses[color];
+
   return (
-    <div className={`bg-${color}-50 p-3 rounded`}>
-      <p className={`text-2xl text-${color}-600`}>{value}</p>
+    <div className={`${classes.bg} p-3 rounded`}>
+      <p className={`text-2xl ${classes.text}`}>{value}</p>
       <p className="text-xs text-gray-600">{label}</p>
     </div>
   );

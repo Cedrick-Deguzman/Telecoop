@@ -2,6 +2,7 @@
 
 import { BillingRecord } from '../types';
 import { X, AlertTriangle, FileText, User, Calendar } from 'lucide-react';
+import { formatCurrency } from '@/app/utils/format';
 
 interface ReferenceWarningModalProps {
   invoices: BillingRecord[];
@@ -20,116 +21,101 @@ export function ReferenceWarningModal({
   onProceed,
 }: ReferenceWarningModalProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in">
-        {/* Warning Header */}
-        <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-white bg-opacity-20 p-2 rounded-full">
-              <AlertTriangle className="text-white" size={28} strokeWidth={2.5} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <div className="shell-panel-strong max-h-[90vh] w-full max-w-2xl overflow-hidden">
+        <div className="bg-[linear-gradient(135deg,#dc2626_0%,#b91c1c_100%)] px-6 py-5 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-full bg-white/15 p-2">
+                <AlertTriangle size={26} strokeWidth={2.5} />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-red-100">Reference Check</p>
+                <h2 className="mt-2 text-2xl">Duplicate reference number</h2>
+                <p className="mt-1 text-sm text-red-100">This reference has already been used.</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl text-white">Duplicate Reference Number</h2>
-              <p className="text-red-100 text-sm">This reference has already been used</p>
-            </div>
+
+            <button onClick={onCancel} className="rounded-xl border border-white/20 bg-white/10 p-2 transition hover:bg-white/15">
+              <X size={20} />
+            </button>
           </div>
-          <button
-            onClick={onCancel}
-            className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-          >
-            <X size={24} />
-          </button>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-6">
-          {/* Reference Number Display */}
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-red-600 mb-1">Reference Number</p>
-            <p className="text-2xl text-red-700 font-mono">{pendingPayment.referenceNumber}</p>
+        <div className="space-y-6 px-6 py-6">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-sm text-rose-700">Reference Number</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{pendingPayment.referenceNumber}</p>
           </div>
 
-          {/* Warning Message */}
-          <div className="mb-6">
-            <p className="text-gray-700 mb-2">
+          <div>
+            <p className="text-base font-semibold text-slate-950">
               This reference number has already been used for the following invoice(s):
             </p>
-            <p className="text-sm text-gray-500">
-              Please verify if this is correct before proceeding.
-            </p>
+            <p className="mt-1 text-sm text-slate-500">Please verify before proceeding with the same payment flow.</p>
           </div>
 
-          {/* Invoice List */}
-          <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
-            {invoices.map((inv) => (
-              <div
-                key={inv.id}
-                className="border border-red-200 bg-red-50 rounded-lg p-4 hover:bg-red-100 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <FileText className="text-red-600" size={20} />
-                    <span className="text-red-900">Invoice #{inv.id.toString().padStart(6, '0')}</span>
+          <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+            {invoices.map((invoice) => (
+              <div key={invoice.id} className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-center gap-2 text-rose-800">
+                    <FileText size={18} />
+                    <span className="font-semibold">Invoice #{invoice.id.toString().padStart(6, '0')}</span>
                   </div>
-                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs">
+                  <span className="inline-flex rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-white">
                     Already Used
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <User className="text-red-500" size={16} />
+                <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="flex items-start gap-2">
+                    <User className="mt-0.5 text-rose-500" size={16} />
                     <div>
-                      <p className="text-gray-500 text-xs">Client</p>
-                      <p className="text-gray-900">{inv.clientName}</p>
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Client</p>
+                      <p className="mt-1 text-slate-900">{invoice.clientName}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="text-red-500" size={16} />
+                  <div className="flex items-start gap-2">
+                    <Calendar className="mt-0.5 text-rose-500" size={16} />
                     <div>
-                      <p className="text-gray-500 text-xs">Month</p>
-                      <p className="text-gray-900">{inv.month}</p>
+                      <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Month</p>
+                      <p className="mt-1 text-slate-900">{invoice.month}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <p className="text-gray-500 text-xs">Amount</p>
-                      <p className="text-gray-900">₱{inv.amount.toFixed(2)}</p>
-                    </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.14em] text-slate-400">Amount</p>
+                    <p className="mt-1 text-slate-900">{formatCurrency(invoice.amount)}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Important Notice */}
-          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="text-amber-600 flex-shrink-0 mt-0.5" size={20} />
+              <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={20} />
               <div>
-                <p className="text-amber-900 mb-1">Important Notice</p>
-                <p className="text-sm text-amber-700">
-                  Using duplicate reference numbers may cause confusion in payment tracking and reconciliation. 
-                  Only proceed if you are certain this is correct.
+                <p className="font-semibold text-amber-900">Important Notice</p>
+                <p className="mt-1 text-sm text-amber-800">
+                  Using duplicate reference numbers may cause confusion in payment tracking and reconciliation. Only
+                  proceed if you are certain this is correct.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={onCancel}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all hover:border-gray-400 flex items-center justify-center gap-2"
+              className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
             >
-              <X size={20} />
               Cancel & Review
             </button>
             <button
               onClick={onProceed}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              className="flex-1 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             >
-              <AlertTriangle size={20} />
               Proceed Anyway
             </button>
           </div>

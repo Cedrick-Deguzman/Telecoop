@@ -2,7 +2,7 @@
 
 import { BillingContainer } from "./BillingContainer";
 
-export default function ClientsPage() {
+export default function BillingPage() {
   return (
       <BillingContainer/>
   );
