@@ -4,7 +4,8 @@ import { Plan, Napbox } from '../types';
 import { FormInput } from '@/app/components/ui/FormInput';
 import { FormSelect } from '@/app/components/ui/FormSelect';
 import { useClientsPorts } from '../hooks/useClientPorts';
-import type { ChangeEvent } from 'react';
+import { LoaderCircle } from 'lucide-react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 
 interface AddClientModalProps {
   plans: Plan[];
@@ -19,6 +20,7 @@ export default function AddClientModal({
   onClose,
   onSuccess,
 }: AddClientModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
    const {
     selectedNapboxId,
     setSelectedNapboxId,
@@ -30,8 +32,10 @@ export default function AddClientModal({
   /* -------------------------------------------- */
   /* Submit handler                               */
   /* -------------------------------------------- */
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
 
     const form = new FormData(e.currentTarget);
 
@@ -51,6 +55,7 @@ export default function AddClientModal({
     }
 
     try {
+      setIsSubmitting(true);
       const plan = plans.find((p) => p.id === payload.planId);
 
       const res = await fetch('/api/clients/add-client', {
@@ -74,6 +79,8 @@ export default function AddClientModal({
     } catch (err) {
       console.error(err);
       alert('Something went wrong while adding client');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -139,12 +146,18 @@ export default function AddClientModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
-            <button className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-              Add Client
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex flex-1 items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+            >
+              {isSubmitting && <LoaderCircle size={18} className="animate-spin" />}
+              {isSubmitting ? 'Adding...' : 'Add Client'}
             </button>
           </div>
         </form>
