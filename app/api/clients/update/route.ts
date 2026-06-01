@@ -58,6 +58,7 @@ export async function POST(req: Request) {
     }
 
     const currentPort = existingClient.napboxPort;
+    const isReactivation = existingClient.status !== "active" && status === "active";
 
     /* ===============================
        CLIENT BECOMES INACTIVE
@@ -99,48 +100,48 @@ export async function POST(req: Request) {
       if (isSamePort) {
         // Keep the current assignment when the user edits other client fields.
       } else {
-      const newPort = await prisma.napboxPort.findFirst({
-        where: {
-          napboxId: targetNapboxId,
-          portNumber: targetPortNumber,
-        },
-      });
-
-      if (!newPort || (newPort.status !== "available" && newPort.clientId !== clientId)) {
-        return NextResponse.json(
-          { error: "Selected port is not available" },
-          { status: 400 }
-        );
-      }
-
-      if (currentPort) {
-        await prisma.napboxPort.update({
-          where: { id: currentPort.id },
-          data: {
-            status: "available",
-            clientId: null,
-            connectedSince: null,
+        const newPort = await prisma.napboxPort.findFirst({
+          where: {
+            napboxId: targetNapboxId,
+            portNumber: targetPortNumber,
           },
         });
-      }
 
-      await prisma.napboxPort.update({
-        where: { id: newPort.id },
-        data: {
-          status: "occupied",
-          clientId,
-          connectedSince: newPort.clientId === clientId ? newPort.connectedSince : new Date(),
-        },
-      });
+        if (!newPort || (newPort.status !== "available" && newPort.clientId !== clientId)) {
+          return NextResponse.json(
+            { error: "Selected port is not available" },
+            { status: 400 }
+          );
+        }
 
-      const napboxesToSync = new Set<number>([targetNapboxId]);
-      if (currentPort) {
-        napboxesToSync.add(currentPort.napboxId);
-      }
+        if (currentPort) {
+          await prisma.napboxPort.update({
+            where: { id: currentPort.id },
+            data: {
+              status: "available",
+              clientId: null,
+              connectedSince: null,
+            },
+          });
+        }
 
-      for (const napboxIdToSync of napboxesToSync) {
-        await syncNapboxSummary(napboxIdToSync);
-      }
+        await prisma.napboxPort.update({
+          where: { id: newPort.id },
+          data: {
+            status: "occupied",
+            clientId,
+            connectedSince: newPort.clientId === clientId ? newPort.connectedSince : new Date(),
+          },
+        });
+
+        const napboxesToSync = new Set<number>([targetNapboxId]);
+        if (currentPort) {
+          napboxesToSync.add(currentPort.napboxId);
+        }
+
+        for (const napboxIdToSync of napboxesToSync) {
+          await syncNapboxSummary(napboxIdToSync);
+        }
       }
     }
     
@@ -165,7 +166,7 @@ export async function POST(req: Request) {
         phone,
         status,
         updatedAt: new Date(),
-        ...(status === "active" ? { reactivatedAt: new Date() } : {}),
+        ...(isReactivation ? { reactivatedAt: new Date() } : {}),
         ...(normalizedPlanId
           ? { plan: { connect: { id: normalizedPlanId } } }
           : { plan: { disconnect: true } }),

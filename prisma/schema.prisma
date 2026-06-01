@@ -80,6 +80,7 @@ model Invoice {
   client        Client   @relation(fields: [clientId], references: [id])
 
   @@index([clientId], map: "Invoice_clientId_idx")
+  @@unique([clientId, billingDate])
 
   @@map("invoice")
 }
