@@ -1,3 +1,4 @@
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { NapBox } from '../types';
@@ -31,7 +32,9 @@ export function AddEditNapBoxModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto z-50">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-xl w-full">
         <div className="flex justify-between mb-4">
           <h2 className="text-2xl">
@@ -110,6 +113,8 @@ export function AddEditNapBoxModal({
         </div>
         </form>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

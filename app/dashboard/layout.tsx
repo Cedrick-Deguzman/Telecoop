@@ -12,11 +12,13 @@ import {
   X,
   Menu,
   LogOut,
+  Wrench,
+  UserCog,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 
-type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes';
+type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes' | 'technicians' | 'installations';
 
 const navigation = [
   { id: 'dashboard' as View, name: 'Dashboard', icon: LayoutDashboard, note: 'Overview and activity' },
@@ -25,6 +27,8 @@ const navigation = [
   { id: 'payments' as View, name: 'Payments History', icon: CreditCard, note: 'Settled collections' },
   { id: 'plans' as View, name: 'Plans', icon: Package, note: 'Packages and pricing' },
   { id: 'napboxes' as View, name: 'Napboxes', icon: Box, note: 'Port availability' },
+  { id: 'technicians' as View, name: 'Technicians', icon: UserCog, note: 'Field technician management' },
+  { id: 'installations' as View, name: 'Installations', icon: Wrench, note: 'Installation job tracking' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

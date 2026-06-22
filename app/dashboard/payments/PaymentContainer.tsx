@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PaymentRecord, BillingRecord } from '../billing/types';
+import { exportToCsv, formatExportDate } from '@/lib/exportToCsv';
 import { usePayments } from './hooks/usePayments';
 import { PaymentsStats } from './components/PaymentsStats';
 import { PaymentsSearch } from './components/PaymentsSearch';
@@ -49,6 +50,16 @@ export function PaymentsContainer() {
       <PaymentsSearch
         searchTerm={searchTerm}
         setSearchTerm={handleSearchChange}
+        onExport={() => exportToCsv('payments', payments.map(p => ({
+          'Invoice ID': p.invoiceId,
+          'Client Name': p.clientName,
+          'Plan': p.plan,
+          'Amount (PHP)': p.amount,
+          'Method': p.method,
+          'Billing Date': formatExportDate(p.billingDate),
+          'Payment Date': formatExportDate(p.date),
+          'Status': p.status,
+        })))}
       />
       <PaymentsTable
         payments={paginatedPayments}

@@ -1,3 +1,4 @@
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { MapPin, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { NapBox, Port } from '../types';
@@ -129,8 +130,9 @@ export function PortsModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto z-50">
+      <div className="flex min-h-full items-center justify-center p-4">
         <div className="bg-white rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -368,5 +370,6 @@ export function PortsModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

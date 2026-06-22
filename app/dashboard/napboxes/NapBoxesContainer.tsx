@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { NapBox } from './types';
 import { useNapBoxes } from './hooks/useNapboxes';
+import { exportToCsv, formatExportDate } from '@/lib/exportToCsv';
 
 import { NapBoxesStats } from './components/NapBoxesStats';
 import { NapBoxesSearch } from './components/NapBoxesSearch';
@@ -13,6 +14,7 @@ import { NapboxesSkeleton } from '../components/PageSkeletons';
 
 export function NapBoxesContainer() {
   const {
+    napBoxes,
     filteredNapBoxes,
     loading,
     searchTerm,
@@ -36,6 +38,18 @@ export function NapBoxesContainer() {
         value={searchTerm}
         onChange={setSearchTerm}
         onAdd={() => setShowAddEdit(true)}
+        onExport={() => exportToCsv('napboxes', napBoxes.map(n => ({
+          'Name': n.name,
+          'Location': n.location,
+          'Status': n.status,
+          'Total Ports': n.totalPorts,
+          'Available': n.availablePorts,
+          'Occupied': n.occupiedPorts,
+          'Faulty': n.faultyPorts,
+          'Internal Use': n.internalUsePorts,
+          'Test Line': n.testLinePorts,
+          'Install Date': formatExportDate(n.installDate),
+        })))}
       />
 
       <NapBoxesGrid

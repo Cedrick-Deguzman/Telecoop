@@ -1,5 +1,6 @@
 'use client';
 
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { useState } from 'react';
 import { X, CreditCard } from 'lucide-react';
 import { BillingRecord, MarkPaidPayload } from '../types';
@@ -48,7 +49,9 @@ export function MarkPaidModal({
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
+    <ModalPortal>
+    <div className="fixed inset-0 z-30 bg-slate-950/45 overflow-y-auto backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="shell-panel-strong w-full max-w-md overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200/70 px-6 py-4">
           <div>
@@ -120,6 +123,8 @@ export function MarkPaidModal({
           </button>
         </div>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

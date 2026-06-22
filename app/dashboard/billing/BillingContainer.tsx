@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Download } from 'lucide-react';
+import { exportToCsv, formatExportDate } from '@/lib/exportToCsv';
 import { BillingRecord } from './types';
 import { BillingStats } from './components/BillingStats';
 import { BillingSearch } from './components/BillingSearch';
@@ -127,9 +128,29 @@ export function BillingContainer() {
           Showing <span className="font-semibold text-slate-900">{paginatedItems.length}</span> of{' '}
           <span className="font-semibold text-slate-900">{filteredRecords.length}</span> filtered records
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-700">
-          <BadgeCheck size={16} />
-          Current month billing dataset
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => exportToCsv('billing', billingRecords.map(r => ({
+              'Invoice ID': r.id,
+              'Client Name': r.clientName,
+              'Email': r.email,
+              'Plan': r.plan,
+              'Amount (PHP)': r.amount,
+              'Status': r.status,
+              'Billing Date': formatExportDate(r.billingDate),
+              'Due Date': formatExportDate(r.dueDate),
+              'Paid Date': formatExportDate(r.paidDate),
+              'Payment Method': r.paymentMethod ?? '',
+            })))}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+          >
+            <Download size={15} />
+            Export
+          </button>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm text-emerald-700">
+            <BadgeCheck size={16} />
+            Current month billing dataset
+          </div>
         </div>
       </div>
 

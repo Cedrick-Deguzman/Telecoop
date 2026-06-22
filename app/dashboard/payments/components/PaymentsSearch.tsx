@@ -3,9 +3,10 @@ import { Search, Download } from 'lucide-react';
 interface PaymentsSearchProps {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
+  onExport: () => void;
 }
 
-export function PaymentsSearch({ searchTerm, setSearchTerm }: PaymentsSearchProps) {
+export function PaymentsSearch({ searchTerm, setSearchTerm, onExport }: PaymentsSearchProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       {/* Search Input */}
@@ -21,7 +22,7 @@ export function PaymentsSearch({ searchTerm, setSearchTerm }: PaymentsSearchProp
       </div>
 
       {/* Export Button */}
-      <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+      <button onClick={onExport} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
         <Download size={20} />
         Export
       </button>

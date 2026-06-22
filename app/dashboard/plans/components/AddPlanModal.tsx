@@ -1,4 +1,5 @@
 'use client';
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { Wifi, Zap, Crown, Rocket } from 'lucide-react';
 import { PlanType } from '../types';
 import React from 'react';
@@ -43,7 +44,9 @@ export function AddPlanModal({ isOpen, onClose, onSave }: AddPlanModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto z-50">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96 space-y-3">
         <h2 className="text-xl font-semibold mb-4">Add New Plan</h2>
 
@@ -118,6 +121,8 @@ export function AddPlanModal({ isOpen, onClose, onSave }: AddPlanModalProps) {
           </button>
         </div>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

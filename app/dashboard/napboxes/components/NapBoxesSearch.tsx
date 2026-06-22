@@ -1,12 +1,13 @@
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Download } from 'lucide-react';
 
 interface Props {
   value: string;
   onChange: (value: string) => void;
   onAdd: () => void;
+  onExport: () => void;
 }
 
-export function NapBoxesSearch({ value, onChange, onAdd }: Props) {
+export function NapBoxesSearch({ value, onChange, onAdd, onExport }: Props) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-between">
       <div className="relative flex-1 max-w-md">
@@ -19,13 +20,22 @@ export function NapBoxesSearch({ value, onChange, onAdd }: Props) {
         />
       </div>
 
-      <button
-        onClick={onAdd}
-        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-      >
-        <Plus size={20} />
-        Add NAP Box
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onExport}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+        >
+          <Download size={16} />
+          Export
+        </button>
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          <Plus size={20} />
+          Add NAP Box
+        </button>
+      </div>
     </div>
   );
 }

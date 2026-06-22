@@ -1,5 +1,6 @@
 'use client';
 
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { Client, Plan, Napbox } from '../types';
 import { FormInput } from '@/app/components/ui/FormInput';
 import { FormSelect } from '@/app/components/ui/FormSelect';
@@ -102,7 +103,9 @@ export default function EditClientModal({
   /* -------------------------------------------- */
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 className="text-2xl mb-4">Edit Client</h2>
 
@@ -240,6 +243,8 @@ export default function EditClientModal({
           </div>
         </form>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

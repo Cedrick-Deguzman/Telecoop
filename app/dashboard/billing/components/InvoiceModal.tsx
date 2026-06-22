@@ -1,5 +1,6 @@
 'use client';
 
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { useState } from 'react';
 import { CheckCircle, Download } from 'lucide-react';
 import { BillingRecord } from '../types';
@@ -52,7 +53,9 @@ export function InvoiceModal({ invoice, isOpen, onClose }: InvoiceModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 bg-slate-950/50 overflow-y-auto backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div
         id="invoice-pdf"
         className="shell-panel-strong max-h-[90vh] w-full max-w-3xl overflow-y-auto p-8"
@@ -182,6 +185,8 @@ export function InvoiceModal({ invoice, isOpen, onClose }: InvoiceModalProps) {
           </button>
         </div>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

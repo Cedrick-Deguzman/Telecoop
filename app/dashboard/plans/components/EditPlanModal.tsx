@@ -1,4 +1,5 @@
 'use client';
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { X } from 'lucide-react';
 import { PlanType } from '../types';
 import React from 'react';
@@ -43,7 +44,9 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto z-50">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-6">
           <h2 className="text-2xl">Manage Plan</h2>
@@ -129,6 +132,8 @@ export function EditPlanModal({ plan, isOpen, onClose, onUpdate, totalSubscriber
           </div>
         </form>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

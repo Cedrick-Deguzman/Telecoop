@@ -9,6 +9,7 @@ import { Client } from './types';
 import { StatsSummary } from './components/StatsSummary';
 import { useClients } from './hooks/useClients';
 import { ClientsSkeleton } from '../components/PageSkeletons';
+import { exportToCsv, formatExportDate } from '@/lib/exportToCsv';
 
 export default function ClientsContainer() {
   const {
@@ -29,6 +30,21 @@ export default function ClientsContainer() {
   /* -------------------------------------------- */
   /* UI handlers                                  */
   /* -------------------------------------------- */
+
+  const handleExport = () => {
+    exportToCsv('clients', clients.map(c => ({
+      'Name': c.name,
+      'Email': c.email,
+      'Phone': c.phone,
+      'Plan': c.plan.name,
+      'Status': c.status,
+      'Monthly Fee (PHP)': c.monthlyFee,
+      'Installation Date': formatExportDate(c.installationDate),
+      'Napbox ID': c.napboxPort?.napboxId ?? '',
+      'Port Number': c.napboxPort?.portNumber ?? '',
+      'Port Status': c.napboxPort?.status ?? '',
+    })));
+  };
 
   const openEditModal = (client: Client) => {
     setSelectedClient(client);
@@ -54,6 +70,7 @@ export default function ClientsContainer() {
         search={search}
         onSearchChange={setSearch}
         onAdd={() => setShowAddModal(true)}
+        onExport={handleExport}
       />
 
       <StatsSummary clients={clients} />

@@ -1,5 +1,6 @@
 'use client';
 
+import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { BillingRecord } from '../types';
 import { X, AlertTriangle, FileText, User, Calendar } from 'lucide-react';
 import { formatCurrency } from '@/app/utils/format';
@@ -21,7 +22,9 @@ export function ReferenceWarningModal({
   onProceed,
 }: ReferenceWarningModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+    <ModalPortal>
+    <div className="fixed inset-0 z-50 bg-slate-950/50 overflow-y-auto backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="shell-panel-strong max-h-[90vh] w-full max-w-2xl overflow-hidden">
         <div className="bg-[linear-gradient(135deg,#dc2626_0%,#b91c1c_100%)] px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
@@ -121,6 +124,8 @@ export function ReferenceWarningModal({
           </div>
         </div>
       </div>
+      </div>
     </div>
+    </ModalPortal>
   );
 }

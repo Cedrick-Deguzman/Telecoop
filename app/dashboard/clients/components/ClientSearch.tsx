@@ -1,16 +1,18 @@
 'use client';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Download } from 'lucide-react';
 
 interface ClientsSearchProps {
   search: string;
   onSearchChange: (value: string) => void;
   onAdd: () => void;
+  onExport: () => void;
 }
 
 export default function ClientsSearch({
   search,
   onSearchChange,
   onAdd,
+  onExport,
 }: ClientsSearchProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between mb-6 relative">
@@ -25,14 +27,22 @@ export default function ClientsSearch({
             />
         </div>
 
-        {/* Add Button */}
-        <button
-            onClick={onAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-            <Plus size={20} />
-            Add Client
-        </button>
+        <div className="flex items-center gap-2">
+            <button
+                onClick={onExport}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+            >
+                <Download size={16} />
+                Export
+            </button>
+            <button
+                onClick={onAdd}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+                <Plus size={20} />
+                Add Client
+            </button>
+        </div>
     </div>
   );
 }

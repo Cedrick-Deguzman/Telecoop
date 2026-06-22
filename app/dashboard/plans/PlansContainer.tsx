@@ -1,5 +1,7 @@
 'use client';
 
+import { Download } from 'lucide-react';
+import { exportToCsv } from '@/lib/exportToCsv';
 import { PlansStats } from "./components/PlansStats";
 import { PlanCard } from "./components/PlanCard";
 import { PlanTable } from "./components/PlansTable";
@@ -32,12 +34,28 @@ export function PlansContainer() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Available Plans</h2>
-        <button
-          onClick={() => setShowAddPlan(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          + Add Plan
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportToCsv('plans', plans.map(p => ({
+              'Plan Name': p.name,
+              'Speed': p.speed,
+              'Price (PHP)': p.price,
+              'Subscribers': p.subscribers,
+              'Monthly Revenue (PHP)': p.price * p.subscribers,
+              'Status': p.isActive === false ? 'Inactive' : 'Active',
+            })))}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+          >
+            <Download size={16} />
+            Export
+          </button>
+          <button
+            onClick={() => setShowAddPlan(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            + Add Plan
+          </button>
+        </div>
       </div>
 
       <PlansStats totalSubscribers={totalSubscribers} totalRevenue={totalRevenue} />
