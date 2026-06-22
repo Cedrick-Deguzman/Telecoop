@@ -51,6 +51,7 @@ model Client {
   plan               Plan?     @relation("PlanClients", fields: [planId], references: [id])
   status             String
   monthlyFee         Float
+  billingDay         Int       @default(15)
   reactivatedAt      DateTime?
   lastNapboxId       Int?
   lastPortNumber     Int?

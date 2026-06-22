@@ -7,6 +7,7 @@ import { FormSelect } from '@/app/components/ui/FormSelect';
 import { useClientsPorts } from '../hooks/useClientPorts';
 import { LoaderCircle } from 'lucide-react';
 import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { getFirstDueDate, getDaysOfService, getProratedAmount } from '@/lib/billing-utils';
 
 interface AddClientModalProps {
   plans: Plan[];
@@ -17,6 +18,11 @@ interface AddClientModalProps {
   defaultPhone?: string;
   defaultInstallationDate?: string;
   installationId?: number;
+}
+
+function parseUTCDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
 }
 
 export default function AddClientModal({
@@ -30,6 +36,10 @@ export default function AddClientModal({
   installationId,
 }: AddClientModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(plans[0]?.id ?? null);
+  const [installationDate, setInstallationDate] = useState(defaultInstallationDate || '');
+  const [billingDay, setBillingDay] = useState<number>(15);
+
   const {
     selectedNapboxId,
     setSelectedNapboxId,
@@ -37,6 +47,17 @@ export default function AddClientModal({
     setSelectedPortNumber,
     availablePorts,
   } = useClientsPorts({ napboxes, selectedClient: null });
+
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId);
+
+  const preview = (() => {
+    if (!selectedPlan || !installationDate) return null;
+    const install = parseUTCDate(installationDate);
+    const firstDueDate = getFirstDueDate(install, billingDay);
+    const days = getDaysOfService(install, firstDueDate);
+    const amount = getProratedAmount(selectedPlan.price, days);
+    return { firstDueDate, days, amount };
+  })();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,6 +72,7 @@ export default function AddClientModal({
       napboxId: Number(form.get('napboxId')),
       portNumber: Number(form.get('portNumber')),
       installationDate: form.get('installationDate')?.toString(),
+      billingDay,
     };
 
     if (!payload.name || !payload.planId || !payload.installationDate) {
@@ -118,6 +140,8 @@ export default function AddClientModal({
                 name="planId"
                 required
                 options={plans.map((p) => ({ value: p.id, label: p.name }))}
+                value={selectedPlanId ?? ''}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedPlanId(Number(e.target.value))}
               />
 
               <FormSelect
@@ -147,7 +171,63 @@ export default function AddClientModal({
                 type="date"
                 required
                 defaultValue={defaultInstallationDate}
+                onChange={(e) => setInstallationDate(e.target.value)}
               />
+
+              <div>
+                <label className="block text-sm mb-1 text-gray-700">Billing Day</label>
+                <div className="flex gap-3">
+                  {[15, 30].map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setBillingDay(day)}
+                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        billingDay === day
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Every {day}th
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {preview && (
+                <div className="rounded-xl bg-indigo-50 border border-indigo-200 p-4 text-sm">
+                  <p className="font-semibold text-indigo-800 mb-2">First Invoice Preview</p>
+                  <div className="space-y-1 text-indigo-700">
+                    <div className="flex justify-between">
+                      <span>First Due Date</span>
+                      <span className="font-medium">
+                        {preview.firstDueDate.toLocaleDateString('en-PH', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          timeZone: 'UTC',
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Days of Service</span>
+                      <span className="font-medium">{preview.days} days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Prorated Amount</span>
+                      <span className="font-semibold text-indigo-900">
+                        ₱{preview.amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1 mt-1 border-t border-indigo-200">
+                      <span className="text-indigo-500">Subsequent invoices</span>
+                      <span className="font-medium text-indigo-500">
+                        ₱{selectedPlan!.price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button

@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncClientDueDate } from "@/lib/billing-cycle";
+import { getFirstDueDate, getDaysOfService, getProratedAmount } from "@/lib/billing-utils";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, planName, installationDate, napboxId, portNumber } = body;
+    const { name, email, phone, planName, installationDate, napboxId, portNumber, billingDay } = body;
 
     if (!name || !planName || !installationDate) {
       return NextResponse.json(
         { error: "Name, plan, and installation date are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!billingDay || ![15, 30].includes(Number(billingDay))) {
+      return NextResponse.json(
+        { error: "Billing day must be 15 or 30" },
         { status: 400 }
       );
     }
@@ -32,11 +40,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use plan.price instead of static mapping
     const monthlyFee = plan.price;
-
-    const dueDate = new Date(installationDate);
-    dueDate.setMonth(dueDate.getMonth() + 1);
+    const billingDayNum = Number(billingDay);
+    const installDate = new Date(installationDate);
+    const firstDueDate = getFirstDueDate(installDate, billingDayNum);
+    const days = getDaysOfService(installDate, firstDueDate);
+    const proratedAmount = getProratedAmount(monthlyFee, days);
 
     const port = await prisma.napboxPort.findFirst({
       where: { napboxId: Number(napboxId), portNumber: Number(portNumber) }
@@ -45,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (!port) {
       return NextResponse.json({ error: "Port not found" }, { status: 404 });
     }
-    
+
     // Create the client
     const newClient = await prisma.client.create({
       data: {
@@ -54,12 +63,13 @@ export async function POST(req: NextRequest) {
         phone: phone || null,
         plan: { connect: { id: plan.id } },
         monthlyFee,
+        billingDay: billingDayNum,
         status: "active",
-        installationDate: new Date(installationDate),
-        dueDate,
+        installationDate: installDate,
+        dueDate: firstDueDate,
       },
     });
-    
+
     // Update port and connect to this client
     await prisma.napboxPort.updateMany({
       where: {
@@ -72,7 +82,7 @@ export async function POST(req: NextRequest) {
         connectedSince: new Date(),
       },
     });
-    
+
     // Update napbox summary
     const occupied = await prisma.napboxPort.count({
       where: { napboxId: Number(napboxId), status: "occupied" },
@@ -84,7 +94,6 @@ export async function POST(req: NextRequest) {
       where: { napboxId: Number(napboxId), status: "faulty" },
     });
 
-    // Update napbox summary
     await prisma.napbox.update({
       where: { id: Number(napboxId) },
       data: {
@@ -97,9 +106,9 @@ export async function POST(req: NextRequest) {
     await prisma.invoice.create({
       data: {
         clientId: newClient.id,
-        amount: newClient.monthlyFee,
-        billingDate: newClient.installationDate,
-        dueDate,
+        amount: proratedAmount,
+        billingDate: installDate,
+        dueDate: firstDueDate,
         status: "pending",
       },
     });

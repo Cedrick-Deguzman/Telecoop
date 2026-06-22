@@ -11,6 +11,7 @@ interface FormInputProps {
   defaultValue?: string | number;
   placeholder?: string;
   disabled?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -21,6 +22,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   defaultValue,
   placeholder,
   disabled = false,
+  onChange,
 }) => {
   return (
     <div>
@@ -32,6 +34,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         defaultValue={defaultValue}
         placeholder={placeholder}
         disabled={disabled}
+        onChange={onChange}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
       />
     </div>

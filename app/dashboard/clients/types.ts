@@ -25,6 +25,7 @@ export interface PlanDetail {
 export interface Plan {
   id: number;
   name: string;
+  price: number;
 }
 
 export interface NapboxPort {
