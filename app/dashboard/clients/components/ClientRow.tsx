@@ -47,7 +47,7 @@ export default function ClientsRow({ client, onEdit, napBoxes }: ClientsRowProps
       </td>
 
       <td className="mt-2 flex items-center gap-2 px-6 py-4">
-        {client.plan?.icon &&
+        {client.plan?.icon && planIcons[client.plan.icon] &&
           (() => {
             const Icon = planIcons[client.plan.icon];
             return <Icon size={20} className={planColorClasses[client.plan.color] || 'text-indigo-600'} />;

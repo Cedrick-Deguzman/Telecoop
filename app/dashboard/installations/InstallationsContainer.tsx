@@ -6,15 +6,16 @@ import { useInstallations } from './hooks/useInstallations';
 import { InstallationsStats } from './components/InstallationsStats';
 import { InstallationsTable } from './components/InstallationsTable';
 import { AddEditInstallationModal } from './components/AddEditInstallationModal';
+import { ViewInstallationModal } from './components/ViewInstallationModal';
 import AddClientModal from '@/app/dashboard/clients/components/AddClientModal';
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'in_progress', label: 'In Progress' },
+  { value: 'all',       label: 'All Statuses' },
+  { value: 'pending',   label: 'Pending' },
+  { value: 'assigned',  label: 'Assigned' },
+  { value: 'ongoing',   label: 'Ongoing' },
   { value: 'completed', label: 'Completed' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'rescheduled', label: 'Rescheduled' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
 export default function InstallationsContainer() {
@@ -22,6 +23,7 @@ export default function InstallationsContainer() {
   const [showJobModal, setShowJobModal] = useState(false);
   const [editing, setEditing] = useState<Installation | null>(null);
   const [convertingJob, setConvertingJob] = useState<Installation | null>(null);
+  const [viewing, setViewing] = useState<Installation | null>(null);
 
   const openNew = () => { setEditing(null); setShowJobModal(true); };
   const openEdit = (i: Installation) => { setEditing(i); setShowJobModal(true); };
@@ -29,6 +31,9 @@ export default function InstallationsContainer() {
 
   const handleConvert = (i: Installation) => setConvertingJob(i);
   const closeConvertModal = () => setConvertingJob(null);
+
+  const openView = (i: Installation) => setViewing(i);
+  const closeView = () => setViewing(null);
 
   if (loading) {
     return (
@@ -77,14 +82,23 @@ export default function InstallationsContainer() {
         <span className="font-semibold text-slate-900">{installations.length}</span> job orders
       </div>
 
-      <InstallationsTable installations={filtered} onEdit={openEdit} onConvert={handleConvert} />
+      <InstallationsTable installations={filtered} onView={openView} onEdit={openEdit} onConvert={handleConvert} />
 
       {showJobModal && (
         <AddEditInstallationModal
           installation={editing}
           technicians={technicians}
+          napboxes={napboxes}
           onClose={closeJobModal}
           onSuccess={fetchAll}
+        />
+      )}
+
+      {viewing && (
+        <ViewInstallationModal
+          installation={viewing}
+          onClose={closeView}
+          onEdit={() => openEdit(viewing)}
         />
       )}
 
@@ -94,7 +108,10 @@ export default function InstallationsContainer() {
           napboxes={napboxes}
           defaultName={convertingJob.prospectName ?? ''}
           defaultPhone={convertingJob.prospectPhone ?? ''}
+          defaultAddress={convertingJob.prospectAddress ?? ''}
           defaultInstallationDate={convertingJob.completedDate?.slice(0, 10) ?? ''}
+          defaultNapboxId={convertingJob.napboxId}
+          defaultPortNumber={convertingJob.portNumber}
           installationId={convertingJob.id}
           onClose={closeConvertModal}
           onSuccess={() => { closeConvertModal(); void fetchAll(); }}

@@ -7,9 +7,9 @@ export function InstallationsStats({ installations }: { installations: Installat
     const d = new Date(i.createdAt);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).length;
-  const pending = installations.filter(i => i.status === 'pending' || i.status === 'in_progress').length;
+  const pending = installations.filter(i => i.status === 'pending' || i.status === 'assigned' || i.status === 'ongoing').length;
   const completed = installations.filter(i => i.status === 'completed').length;
-  const failed = installations.filter(i => i.status === 'failed').length;
+  const cancelled = installations.filter(i => i.status === 'cancelled').length;
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -37,8 +37,8 @@ export function InstallationsStats({ installations }: { installations: Installat
       <div className="shell-panel px-5 py-4 flex items-center gap-4">
         <div className="rounded-2xl bg-rose-50 p-3"><XCircle size={20} className="text-rose-600" /></div>
         <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Failed</p>
-          <p className="text-2xl font-bold text-slate-900">{failed}</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">Cancelled</p>
+          <p className="text-2xl font-bold text-slate-900">{cancelled}</p>
         </div>
       </div>
     </div>

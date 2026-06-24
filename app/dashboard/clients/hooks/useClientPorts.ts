@@ -6,14 +6,16 @@ import { Napbox, NapboxPort, Client } from "../types";
 interface UseClientsPortsProps {
   napboxes: Napbox[];
   selectedClient?: Client | null;
+  initialNapboxId?: number | null;
+  initialPortNumber?: number | null;
 }
 
-export function useClientsPorts({ napboxes, selectedClient }: UseClientsPortsProps) {
+export function useClientsPorts({ napboxes, selectedClient, initialNapboxId, initialPortNumber }: UseClientsPortsProps) {
   const [selectedNapboxId, setSelectedNapboxId] = useState<number | null>(
-    selectedClient?.napboxPort?.napboxId ?? null
+    initialNapboxId ?? selectedClient?.napboxPort?.napboxId ?? null
   );
   const [selectedPortNumber, setSelectedPortNumber] = useState<number | null>(
-    selectedClient?.napboxPort?.portNumber ?? null
+    initialPortNumber ?? selectedClient?.napboxPort?.portNumber ?? null
   );
   const availablePorts = useMemo<NapboxPort[]>(() => {
     if (!selectedNapboxId) {

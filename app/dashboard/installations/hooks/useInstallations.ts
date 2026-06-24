@@ -24,10 +24,10 @@ export function useInstallations() {
       const [instData, techData, plansData, napboxesData] = await Promise.all([
         instRes.json(), techRes.json(), plansRes.json(), napboxesRes.json(),
       ]);
-      setInstallations(instData);
-      setTechnicians(techData);
-      setPlans(plansData);
-      setNapboxes(napboxesData);
+      setInstallations(Array.isArray(instData) ? instData : []);
+      setTechnicians(Array.isArray(techData) ? techData : []);
+      setPlans(Array.isArray(plansData) ? plansData : []);
+      setNapboxes(Array.isArray(napboxesData) ? napboxesData : []);
     } catch (err) {
       console.error('Failed to fetch installations:', err);
     } finally {

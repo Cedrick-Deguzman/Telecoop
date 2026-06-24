@@ -4,11 +4,11 @@ import { ChevronLeft, ChevronRight, CalendarDays, User, MapPin, Phone } from 'lu
 import { Installation, InstallationStatus } from '../installations/types';
 
 const STATUS_CONFIG: Record<InstallationStatus, { label: string; bg: string; text: string; dot: string; border: string }> = {
-  pending:     { label: 'Pending',     bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-400',  border: 'border-amber-200' },
-  in_progress: { label: 'In Progress', bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-400',   border: 'border-blue-200'  },
-  completed:   { label: 'Completed',   bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-400',  border: 'border-green-200' },
-  failed:      { label: 'Failed',      bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-400',    border: 'border-red-200'   },
-  rescheduled: { label: 'Rescheduled', bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-400', border: 'border-purple-200'},
+  pending:   { label: 'Pending',   bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400',   border: 'border-amber-200'  },
+  assigned:  { label: 'Assigned',  bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-400',    border: 'border-blue-200'   },
+  ongoing:   { label: 'Ongoing',   bg: 'bg-indigo-50',  text: 'text-indigo-700',  dot: 'bg-indigo-400',  border: 'border-indigo-200' },
+  completed: { label: 'Completed', bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-400', border: 'border-emerald-200'},
+  cancelled: { label: 'Cancelled', bg: 'bg-rose-50',    text: 'text-rose-700',    dot: 'bg-rose-400',    border: 'border-rose-200'   },
 };
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -38,7 +38,7 @@ export default function ScheduleContainer() {
     try {
       const res  = await fetch('/api/installations');
       const data = await res.json();
-      setInstallations(data);
+      setInstallations(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch installations:', err);
     } finally {

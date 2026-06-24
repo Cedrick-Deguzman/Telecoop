@@ -1,19 +1,19 @@
 import { Installation } from '../types';
-import { Pencil, User, Calendar, UserPlus, CheckCircle2, Phone, MapPin } from 'lucide-react';
+import { Pencil, Eye, User, Calendar, UserPlus, CheckCircle2, Phone, MapPin, Package } from 'lucide-react';
 
 const STATUS_BADGE: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-700',
-  in_progress: 'bg-blue-100 text-blue-700',
+  pending:   'bg-amber-100 text-amber-700',
+  assigned:  'bg-blue-100 text-blue-700',
+  ongoing:   'bg-indigo-100 text-indigo-700',
   completed: 'bg-emerald-100 text-emerald-700',
-  failed: 'bg-rose-100 text-rose-700',
-  rescheduled: 'bg-purple-100 text-purple-700',
+  cancelled: 'bg-rose-100 text-rose-700',
 };
 const STATUS_LABEL: Record<string, string> = {
-  pending: 'Pending',
-  in_progress: 'In Progress',
+  pending:   'Pending',
+  assigned:  'Assigned',
+  ongoing:   'Ongoing',
   completed: 'Completed',
-  failed: 'Failed',
-  rescheduled: 'Rescheduled',
+  cancelled: 'Cancelled',
 };
 
 function fmt(dateStr: string | null) {
@@ -23,11 +23,12 @@ function fmt(dateStr: string | null) {
 
 interface Props {
   installations: Installation[];
+  onView: (i: Installation) => void;
   onEdit: (i: Installation) => void;
   onConvert: (i: Installation) => void;
 }
 
-export function InstallationsTable({ installations, onEdit, onConvert }: Props) {
+export function InstallationsTable({ installations, onView, onEdit, onConvert }: Props) {
   if (!installations.length) {
     return (
       <div className="shell-panel px-5 py-16 text-center text-slate-400">
@@ -46,7 +47,8 @@ export function InstallationsTable({ installations, onEdit, onConvert }: Props) 
             <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Technician</th>
             <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Scheduled</th>
             <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
-            <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Materials</th>
+            <th className="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -87,7 +89,18 @@ export function InstallationsTable({ installations, onEdit, onConvert }: Props) 
                   </span>
                 </td>
                 <td className="px-5 py-4">
-                  <div className="flex items-center justify-end gap-2">
+                  {i.materials?.submittedAt ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                      <CheckCircle2 size={11} /> Submitted
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-400">
+                      <Package size={11} /> Pending
+                    </span>
+                  )}
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex items-center justify-center gap-2">
                     {canConvert && (
                       <button
                         onClick={() => onConvert(i)}
@@ -96,6 +109,12 @@ export function InstallationsTable({ installations, onEdit, onConvert }: Props) 
                         <UserPlus size={12} /> Convert to Client
                       </button>
                     )}
+                    <button
+                      onClick={() => onView(i)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    >
+                      <Eye size={12} /> View
+                    </button>
                     <button
                       onClick={() => onEdit(i)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"

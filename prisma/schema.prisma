@@ -52,6 +52,9 @@ model Client {
   status             String
   monthlyFee         Float
   billingDay         Int       @default(15)
+  address            String?
+  latitude           Float?
+  longitude          Float?
   reactivatedAt      DateTime?
   lastNapboxId       Int?
   lastPortNumber     Int?
@@ -111,8 +114,9 @@ model Napbox {
   occupiedPorts  Int
   faultyPorts    Int
   installDate DateTime
-  status     String       
+  status     String
   ports      NapboxPort[]
+  installations Installation[]
 
   @@map("napbox")
 }
@@ -177,21 +181,75 @@ model Technician {
 }
 
 model Installation {
-  id            Int         @id @default(autoincrement())
-  clientId      Int?
-  client        Client?     @relation(fields: [clientId], references: [id])
-  technicianId  Int?
-  technician    Technician? @relation(fields: [technicianId], references: [id])
-  scheduledDate DateTime?
-  completedDate DateTime?
-  status        String      @default("pending")
-  notes         String?
-  prospectName  String?
-  prospectPhone String?
+  id              Int         @id @default(autoincrement())
+  clientId        Int?
+  client          Client?     @relation(fields: [clientId], references: [id])
+  technicianId    Int?
+  technician      Technician? @relation(fields: [technicianId], references: [id])
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  status          String      @default("pending")
+  notes           String?
+  prospectName    String?
+  prospectPhone   String?
   prospectAddress String?
-  convertedAt   DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  convertedAt     DateTime?
+
+  // Fiber information
+  napboxId        Int?
+  napbox          Napbox?     @relation(fields: [napboxId], references: [id])
+  portNumber      Int?
+  fiberCore       String?
+  dropCableLength Float?
+
+  // Device information
+  onuSerial       String?
+  routerSerial    String?
+  macAddress      String?
+
+  // Signal readings (dBm)
+  rxReading       Float?
+  txReading       Float?
+
+  // GPS location of client premises
+  latitude        Float?
+  longitude       Float?
+
+  materials       InstallationMaterial?
+  photos          InstallationPhoto[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@map("installation")
+}
+
+model InstallationPhoto {
+  id             Int          @id @default(autoincrement())
+  installationId Int
+  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  url            String
+  publicId       String
+  category       String
+  caption        String?
+  createdAt      DateTime     @default(now())
+
+  @@index([installationId])
+  @@map("installationphoto")
+}
+
+model InstallationMaterial {
+  id             Int          @id @default(autoincrement())
+  installationId Int          @unique
+  installation   Installation @relation(fields: [installationId], references: [id])
+  dropCable      Float?
+  scConnector    Int?
+  cableTies      Int?
+  clamps         Int?
+  patchCord      Int?
+  submittedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("installationmaterial")
 }

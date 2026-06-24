@@ -16,7 +16,10 @@ interface AddClientModalProps {
   onSuccess: () => void;
   defaultName?: string;
   defaultPhone?: string;
+  defaultAddress?: string;
   defaultInstallationDate?: string;
+  defaultNapboxId?: number | null;
+  defaultPortNumber?: number | null;
   installationId?: number;
 }
 
@@ -32,7 +35,10 @@ export default function AddClientModal({
   onSuccess,
   defaultName,
   defaultPhone,
+  defaultAddress,
   defaultInstallationDate,
+  defaultNapboxId,
+  defaultPortNumber,
   installationId,
 }: AddClientModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,7 +52,7 @@ export default function AddClientModal({
     selectedPortNumber,
     setSelectedPortNumber,
     availablePorts,
-  } = useClientsPorts({ napboxes, selectedClient: null });
+  } = useClientsPorts({ napboxes, selectedClient: null, initialNapboxId: defaultNapboxId, initialPortNumber: defaultPortNumber });
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
 
@@ -68,6 +74,7 @@ export default function AddClientModal({
       name: form.get('name')?.toString().trim(),
       email: form.get('email')?.toString().trim(),
       phone: form.get('phone')?.toString().trim(),
+      address: form.get('address')?.toString().trim(),
       planId: Number(form.get('planId')),
       napboxId: Number(form.get('napboxId')),
       portNumber: Number(form.get('portNumber')),
@@ -126,7 +133,7 @@ export default function AddClientModal({
 
             {installationId && (
               <div className="mb-4 rounded-xl bg-indigo-50 border border-indigo-200 px-4 py-3 text-sm text-indigo-700">
-                Pre-filled from job order. Complete the plan and port assignment below.
+                Review and verify all details before confirming. Adjust the plan, port, and billing as needed.
               </div>
             )}
 
@@ -134,6 +141,7 @@ export default function AddClientModal({
               <FormInput label="Full Name" name="name" required defaultValue={defaultName} />
               <FormInput label="Email" name="email" type="email" />
               <FormInput label="Phone" name="phone" type="tel" defaultValue={defaultPhone} />
+              <FormInput label="Address" name="address" defaultValue={defaultAddress} />
 
               <FormSelect
                 label="Plan"

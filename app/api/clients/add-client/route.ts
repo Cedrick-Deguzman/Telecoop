@@ -6,7 +6,7 @@ import { getFirstDueDate, getDaysOfService, getProratedAmount } from "@/lib/bill
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, phone, planName, installationDate, napboxId, portNumber, billingDay } = body;
+    const { name, email, phone, address, planName, installationDate, napboxId, portNumber, billingDay } = body;
 
     if (!name || !planName || !installationDate) {
       return NextResponse.json(
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
         name,
         email: email || null,
         phone: phone || null,
+        address: address?.trim() || null,
         plan: { connect: { id: plan.id } },
         monthlyFee,
         billingDay: billingDayNum,
