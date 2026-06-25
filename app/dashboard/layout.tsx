@@ -50,7 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-transparent text-slate-900">
       <aside
-        className={`sticky top-3 m-3 flex h-[calc(100vh-1.5rem)] shrink-0 flex-col justify-between overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,#0b1f3b_0%,#12325d_52%,#0d2341_100%)] text-white shadow-[0_28px_60px_rgba(13,35,65,0.28)] transition-all duration-300 ${
+        className={`sticky top-0 flex h-screen shrink-0 flex-col justify-between overflow-hidden rounded-r-[2rem] border-r border-white/10 bg-[linear-gradient(180deg,#0b1f3b_0%,#12325d_52%,#0d2341_100%)] text-white shadow-[0_28px_60px_rgba(13,35,65,0.28)] transition-all duration-300 ${
           sidebarOpen ? 'w-80 p-5' : 'w-[5.5rem] p-3'
         }`}
       >
@@ -62,15 +62,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <div className={`relative flex gap-4 ${sidebarOpen ? 'items-start justify-between' : 'justify-center'}`}>
               {sidebarOpen ? (
-                <div className="space-y-3">
-                  <div className="flex items-center text-[2rem] leading-none">
-                    <span>Telec</span>
-                    <Infinity className="mx-1 mt-1 text-red-400" size={34} strokeWidth={2.4} />
-                    <span>p</span>
-                  </div>
-                  <p className="max-w-[14rem] text-sm text-slate-300">
-                    Network, subscribers, and collections in one focused workspace.
-                  </p>
+                <div className="flex items-center text-[2rem] leading-none">
+                  <span>Telec</span>
+                  <Infinity className="mx-1 mt-1 text-red-400" size={34} strokeWidth={2.4} />
+                  <span>p</span>
                 </div>
               ) : null}
 
@@ -136,16 +131,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className={`shrink-0 pt-4 ${sidebarOpen ? 'space-y-4' : 'flex justify-center'}`}>
-          {sidebarOpen && (
-            <div className="rounded-[1.4rem] border border-white/12 bg-white/8 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Signed In</p>
-              <p className="mt-2 text-base font-semibold text-white">
-                {status === 'loading' ? 'Loading user...' : session?.user?.name ?? 'Telecoop Admin'}
-              </p>
-              <p className="mt-1 text-sm text-slate-300">{todayLabel}</p>
-            </div>
-          )}
-
           <button
             onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
             className={`flex items-center justify-center gap-3 border border-white/12 bg-white/8 text-sm font-semibold text-slate-50 transition hover:bg-red-500/90 ${
