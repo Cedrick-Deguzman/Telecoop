@@ -11,6 +11,26 @@ enum ClientStatus {
   inactive
 }
 
+enum InventoryItemType {
+  serialized
+  consumable
+}
+
+enum InventorySerialStatus {
+  in_stock
+  deployed
+  returned
+  damaged
+}
+
+enum InventoryTransactionType {
+  stock_in
+  release
+  return
+  usage
+  damaged
+}
+
 enum InvoiceStatus {
   paid
   pending
@@ -215,8 +235,11 @@ model Installation {
   latitude        Float?
   longitude       Float?
 
-  materials       InstallationMaterial?
-  photos          InstallationPhoto[]
+  materials             InstallationMaterial?
+  materialUsages        InstallationMaterialUsage[]
+  photos                InstallationPhoto[]
+  inventorySerials      InventorySerial[]
+  inventoryTransactions InventoryTransaction[]
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
@@ -252,4 +275,79 @@ model InstallationMaterial {
   updatedAt      DateTime     @updatedAt
 
   @@map("installationmaterial")
+}
+
+model InventoryCategory {
+  id        Int               @id @default(autoincrement())
+  name      String            @unique
+  type      InventoryItemType
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  items     InventoryItem[]
+
+  @@map("inventorycategory")
+}
+
+model InventoryItem {
+  id                Int                    @id @default(autoincrement())
+  name              String
+  categoryId        Int
+  category          InventoryCategory      @relation(fields: [categoryId], references: [id])
+  unit              String                 @default("pcs")
+  quantity          Float                  @default(0)
+  lowStockThreshold Float?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  serials           InventorySerial[]
+  transactions      InventoryTransaction[]
+  materialUsages    InstallationMaterialUsage[]
+
+  @@map("inventoryitem")
+}
+
+model InventorySerial {
+  id             Int                   @id @default(autoincrement())
+  itemId         Int
+  item           InventoryItem         @relation(fields: [itemId], references: [id])
+  serialNumber   String                @unique
+  macAddress     String?
+  status         InventorySerialStatus @default(in_stock)
+  installationId Int?
+  installation   Installation?         @relation(fields: [installationId], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  transactions   InventoryTransaction[]
+
+  @@map("inventoryserial")
+}
+
+model InstallationMaterialUsage {
+  id              Int           @id @default(autoincrement())
+  installationId  Int
+  installation    Installation  @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  inventoryItemId Int
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Float
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([installationId, inventoryItemId])
+  @@map("installationmaterialusage")
+}
+
+model InventoryTransaction {
+  id             Int                      @id @default(autoincrement())
+  itemId         Int
+  item           InventoryItem            @relation(fields: [itemId], references: [id])
+  type           InventoryTransactionType
+  quantity       Float?
+  serialId       Int?
+  serial         InventorySerial?         @relation(fields: [serialId], references: [id])
+  installationId Int?
+  installation   Installation?            @relation(fields: [installationId], references: [id])
+  notes          String?
+  performedBy    String?
+  createdAt      DateTime                 @default(now())
+
+  @@map("inventorytransaction")
 }

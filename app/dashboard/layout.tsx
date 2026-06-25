@@ -15,11 +15,12 @@ import {
   Wrench,
   UserCog,
   CalendarDays,
+  Archive,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 
-type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes' | 'technicians' | 'installations' | 'schedule';
+type View = 'dashboard' | 'clients' | 'billing' | 'payments' | 'plans' | 'napboxes' | 'technicians' | 'installations' | 'schedule' | 'inventory';
 
 const navigation = [
   { id: 'dashboard' as View, name: 'Dashboard', icon: LayoutDashboard, note: 'Overview and activity' },
@@ -31,6 +32,7 @@ const navigation = [
   { id: 'technicians' as View, name: 'Technicians', icon: UserCog, note: 'Field technician management' },
   { id: 'installations' as View, name: 'Installations', icon: Wrench, note: 'Installation job tracking' },
   { id: 'schedule' as View, name: 'Schedule', icon: CalendarDays, note: 'Installation calendar view' },
+  { id: 'inventory' as View, name: 'Inventory', icon: Archive, note: 'Stock tracking and materials' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

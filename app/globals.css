@@ -251,6 +251,79 @@ html {
     pointer-events: none;
   }
 
+  .input {
+    display: block;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #0f172a;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    outline: none;
+  }
+
+  .input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  }
+
+  .input::placeholder {
+    color: #94a3b8;
+  }
+
+  .input:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    background: #4f46e5;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ffffff;
+    transition: background-color 150ms ease, opacity 150ms ease;
+    outline: none;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #4338ca;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    transition: background-color 150ms ease, border-color 150ms ease;
+    outline: none;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
   .nav-pill {
     border: 1px solid transparent;
     border-radius: 1rem;

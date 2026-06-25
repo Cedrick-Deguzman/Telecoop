@@ -1,8 +1,8 @@
 'use client';
 import { ModalPortal } from '@/app/components/ui/ModalPortal';
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { X, LoaderCircle, CheckCircle2, Package, AlertCircle, Plus, Trash2 } from 'lucide-react';
-import { Installation, InstallationStatus, TechnicianOption, NapboxOption, InstallationPhoto, PHOTO_CATEGORIES } from '../types';
+import { Installation, InstallationStatus, InstallationMaterialUsage, TechnicianOption, NapboxOption, InstallationPhoto, PHOTO_CATEGORIES } from '../types';
 
 interface Props {
   installation: Installation | null;
@@ -32,26 +32,26 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
   const [isSubmittingMaterials, setIsSubmittingMaterials] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [matErrors, setMatErrors] = useState<string[]>([]);
-  const [localSubmittedAt, setLocalSubmittedAt] = useState<string | null>(
-    installation?.materials?.submittedAt ?? null
+
+  const buildUsageMap = (inst: typeof installation): Record<number, string> => {
+    const map: Record<number, string> = {};
+    for (const u of inst?.materialUsages ?? []) {
+      map[u.inventoryItemId] = u.quantity.toString();
+    }
+    return map;
+  };
+  const [localMaterialUsages, setLocalMaterialUsages] = useState<InstallationMaterialUsage[]>(
+    installation?.materialUsages ?? []
   );
-  const [matForm, setMatForm] = useState({
-    dropCable:   installation?.materials?.dropCable?.toString()   ?? '',
-    scConnector: installation?.materials?.scConnector?.toString() ?? '',
-    cableTies:   installation?.materials?.cableTies?.toString()   ?? '',
-    clamps:      installation?.materials?.clamps?.toString()      ?? '',
-    patchCord:   installation?.materials?.patchCord?.toString()   ?? '',
-  });
-  const lastSavedMaterials = useRef({
-    dropCable:   installation?.materials?.dropCable?.toString()   ?? '',
-    scConnector: installation?.materials?.scConnector?.toString() ?? '',
-    cableTies:   installation?.materials?.cableTies?.toString()   ?? '',
-    clamps:      installation?.materials?.clamps?.toString()      ?? '',
-    patchCord:   installation?.materials?.patchCord?.toString()   ?? '',
-  });
+  const [matUsages, setMatUsages] = useState<Record<number, string>>(() => buildUsageMap(installation));
+  const [consumableItems, setConsumableItems] = useState<Array<{ id: number; name: string; unit: string; quantity: number; category: { name: string } }>>([]);
+  const [inventoryLoaded, setInventoryLoaded] = useState(false);
+
   const [localPhotos, setLocalPhotos] = useState<InstallationPhoto[]>(installation?.photos ?? []);
   const [categoryUpload, setCategoryUpload] = useState<Record<string, { show: boolean; staged: { file: File; caption: string; preview: string }[]; uploading: boolean }>>({});
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [onuSerials, setOnuSerials] = useState<{ id: number; serialNumber: string; macAddress: string | null; item: { name: string } }[]>([]);
+  const [routerSerials, setRouterSerials] = useState<{ id: number; serialNumber: string; macAddress: string | null; item: { name: string } }[]>([]);
 
   const [form, setForm] = useState({
     // Prospect / job info
@@ -81,19 +81,13 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
   });
 
   useEffect(() => {
-    const mat = {
-      dropCable:   installation?.materials?.dropCable?.toString()   ?? '',
-      scConnector: installation?.materials?.scConnector?.toString() ?? '',
-      cableTies:   installation?.materials?.cableTies?.toString()   ?? '',
-      clamps:      installation?.materials?.clamps?.toString()      ?? '',
-      patchCord:   installation?.materials?.patchCord?.toString()   ?? '',
-    };
-    setLocalSubmittedAt(installation?.materials?.submittedAt ?? null);
-    setMatForm(mat);
-    lastSavedMaterials.current = mat;
+    const map = buildUsageMap(installation);
+    setLocalMaterialUsages(installation?.materialUsages ?? []);
+    setMatUsages(map);
     setLocalPhotos(installation?.photos ?? []);
     setCategoryUpload({});
     setPhotoError(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [installation]);
 
   useEffect(() => {
@@ -122,6 +116,35 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
     }
   }, [installation]);
 
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const [serialsRes, itemsRes] = await Promise.all([
+          fetch('/api/inventory/serials?status=in_stock'),
+          fetch('/api/inventory'),
+        ]);
+        const [serialsData, itemsData] = await Promise.all([
+          serialsRes.json(),
+          itemsRes.json(),
+        ]);
+        type SerialEntry = { id: number; serialNumber: string; macAddress: string | null; item: { name: string; category: { name: string } } };
+        setOnuSerials(serialsData.filter((s: SerialEntry) => s.item?.category?.name === 'Modem-Router'));
+        setRouterSerials(serialsData.filter((s: SerialEntry) => s.item?.category?.name === 'Router'));
+        type ItemEntry = { id: number; name: string; unit: string; quantity: number; category: { type: string; name: string } };
+        setConsumableItems(
+          (itemsData as ItemEntry[])
+            .filter(item => item.category?.type === 'consumable')
+            .sort((a, b) => a.name.localeCompare(b.name))
+        );
+      } catch {
+        // inventory hints are non-blocking — fail silently
+      } finally {
+        setInventoryLoaded(true);
+      }
+    };
+    fetchInventory();
+  }, []);
+
   const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }));
 
@@ -142,24 +165,6 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
     if (!form.scheduledDate) basicErrors.push('Scheduled date is required.');
     if (basicErrors.length > 0) { setFormErrors(basicErrors); return; }
 
-    // Partial material fill — if any field is filled, all must be filled
-    if (isEdit) {
-      const anyFilled = Object.values(matForm).some(v => v !== '');
-      if (anyFilled) {
-        const missingMat = [
-          ['Drop Cable', matForm.dropCable],
-          ['SC Connector', matForm.scConnector],
-          ['Cable Ties', matForm.cableTies],
-          ['Clamps', matForm.clamps],
-          ['Patch Cord', matForm.patchCord],
-        ].filter(([, v]) => v === '').map(([label]) => label as string);
-        if (missingMat.length > 0) {
-          setFormErrors([`All material quantities are required if any are filled. Missing: ${missingMat.join(', ')}.`]);
-          return;
-        }
-      }
-    }
-
     // Business rules per status
     if ((form.status === 'assigned' || form.status === 'ongoing') && !form.technicianId) {
       setFormErrors([`A technician must be assigned before setting the status to ${form.status === 'assigned' ? 'Assigned' : 'Ongoing'}.`]);
@@ -169,9 +174,16 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
       const blocking: string[] = [];
       if (!form.technicianId) blocking.push('A technician must be assigned before marking this job as Completed.');
       if (!form.completedDate) blocking.push('Completed date is required when marking this job as Completed.');
-      // Pass if already submitted OR all mat fields filled (will be auto-submitted below)
-      const willAutoSubmit = isEdit && Object.values(matForm).every(v => v !== '');
-      if (!localSubmittedAt && !willAutoSubmit) blocking.push('Materials must be submitted before marking this job as Completed.');
+      const REQUIRED_MATERIAL_CATEGORIES = ['Drop Cable', 'SC Connector'];
+      for (const cat of REQUIRED_MATERIAL_CATEGORIES) {
+        const item = consumableItems.find(i => i.category.name === cat);
+        if (!item) continue;
+        const savedQty = localMaterialUsages.find(u => u.inventoryItemId === item.id)?.quantity ?? 0;
+        const enteredQty = Number(matUsages[item.id] ?? 0);
+        if (savedQty <= 0 && enteredQty <= 0) {
+          blocking.push(`${cat} quantity is required before marking as Completed.`);
+        }
+      }
       // Check all 8 photo categories have at least 1 uploaded or staged photo
       const coveredCategories = new Set([
         ...localPhotos.map(p => p.category),
@@ -184,31 +196,24 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
 
     setIsSubmitting(true);
     try {
-      // Auto-submit materials if all fields are filled
+      // Auto-submit material usages if any quantities are entered
       if (isEdit && installation?.id) {
-        const allFilled = Object.values(matForm).every(v => v !== '');
-        if (allFilled) {
-          const s = lastSavedMaterials.current;
-          const unchanged = localSubmittedAt &&
-            matForm.dropCable   === s.dropCable   &&
-            matForm.scConnector === s.scConnector &&
-            matForm.cableTies   === s.cableTies   &&
-            matForm.clamps      === s.clamps      &&
-            matForm.patchCord   === s.patchCord;
-          if (!unchanged) {
-            const matRes = await fetch(`/api/installations/${installation.id}/materials`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(matForm),
-            });
-            if (!matRes.ok) {
-              const d = await matRes.json();
-              setFormErrors([d.error || 'Failed to submit materials.']);
-              return;
-            }
-            const matData = await matRes.json();
-            setLocalSubmittedAt(matData.submittedAt);
+        const usages = Object.entries(matUsages)
+          .filter(([, qty]) => Number(qty) > 0)
+          .map(([itemId, qty]) => ({ inventoryItemId: Number(itemId), quantity: Number(qty) }));
+        if (usages.length > 0) {
+          const matRes = await fetch(`/api/installations/${installation.id}/material-usage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usages }),
+          });
+          if (!matRes.ok) {
+            const d = await matRes.json();
+            setFormErrors([d.error || 'Failed to submit materials.']);
+            return;
           }
+          const matData = await matRes.json();
+          setLocalMaterialUsages(matData);
         }
       }
 
@@ -310,43 +315,26 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
       return;
     }
 
-    const missing = [
-      ['Drop Cable', matForm.dropCable],
-      ['SC Connector', matForm.scConnector],
-      ['Cable Ties', matForm.cableTies],
-      ['Clamps', matForm.clamps],
-      ['Patch Cord', matForm.patchCord],
-    ].filter(([, v]) => v === '' || v === null || v === undefined).map(([label]) => label);
+    const usages = Object.entries(matUsages)
+      .filter(([, qty]) => Number(qty) > 0)
+      .map(([itemId, qty]) => ({ inventoryItemId: Number(itemId), quantity: Number(qty) }));
 
-    if (missing.length > 0) {
-      setMatErrors([`All quantities are required. Missing: ${(missing as string[]).join(', ')}.`]);
+    if (usages.length === 0) {
+      setMatErrors(['Please enter at least one material quantity.']);
       return;
-    }
-
-    // Skip API call if already submitted and nothing changed
-    if (localSubmittedAt) {
-      const s = lastSavedMaterials.current;
-      const unchanged =
-        matForm.dropCable   === s.dropCable   &&
-        matForm.scConnector === s.scConnector &&
-        matForm.cableTies   === s.cableTies   &&
-        matForm.clamps      === s.clamps      &&
-        matForm.patchCord   === s.patchCord;
-      if (unchanged) return;
     }
 
     setMatErrors([]);
     setIsSubmittingMaterials(true);
     try {
-      const res = await fetch(`/api/installations/${installation.id}/materials`, {
+      const res = await fetch(`/api/installations/${installation.id}/material-usage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(matForm),
+        body: JSON.stringify({ usages }),
       });
       if (!res.ok) { const d = await res.json(); setMatErrors([d.error || 'Failed to submit materials']); return; }
       const data = await res.json();
-      setLocalSubmittedAt(data.submittedAt);
-      lastSavedMaterials.current = { ...matForm };
+      setLocalMaterialUsages(data);
     } catch { setMatErrors(['Something went wrong. Please try again.']); }
     finally { setIsSubmittingMaterials(false); }
   };
@@ -504,15 +492,58 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
               <SectionHeader title="Device Information" />
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">ONU Serial Number</label>
-                  <input className={inputCls} placeholder="e.g. HWTC1A2B3C4D" value={form.onuSerial} onChange={set('onuSerial')} />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Modem-Router</label>
+                  <select
+                    className={inputCls}
+                    value={form.onuSerial}
+                    onChange={e => {
+                      const sn = e.target.value;
+                      const matched = onuSerials.find(s => s.serialNumber === sn);
+                      setForm(f => ({
+                        ...f,
+                        onuSerial: sn,
+                        macAddress: matched?.macAddress ?? f.macAddress,
+                      }));
+                    }}
+                  >
+                    <option value="">— None —</option>
+                    {form.onuSerial && !onuSerials.find(s => s.serialNumber === form.onuSerial) && (
+                      <option value={form.onuSerial}>{form.onuSerial} (current)</option>
+                    )}
+                    {onuSerials.map(s => (
+                      <option key={s.id} value={s.serialNumber}>
+                        {s.item.name} — {s.serialNumber}
+                      </option>
+                    ))}
+                  </select>
+                  {onuSerials.length === 0 && (
+                    <p className="mt-1 text-xs text-slate-400">No Modem-Router units in stock</p>
+                  )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Router Serial Number</label>
-                  <input className={inputCls} placeholder="e.g. TL-WR840N-XXXX" value={form.routerSerial} onChange={set('routerSerial')} />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Router <span className="font-normal text-slate-400">(optional)</span></label>
+                  <select className={inputCls} value={form.routerSerial} onChange={set('routerSerial')}>
+                    <option value="">— None —</option>
+                    {form.routerSerial && !routerSerials.find(s => s.serialNumber === form.routerSerial) && (
+                      <option value={form.routerSerial}>{form.routerSerial} (current)</option>
+                    )}
+                    {routerSerials.map(s => (
+                      <option key={s.id} value={s.serialNumber}>
+                        {s.item.name} — {s.serialNumber}
+                      </option>
+                    ))}
+                  </select>
+                  {routerSerials.length === 0 && (
+                    <p className="mt-1 text-xs text-slate-400">No Router units in stock</p>
+                  )}
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">MAC Address</label>
+                  <div className="flex items-baseline justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700">MAC Address</label>
+                    {form.macAddress && form.onuSerial && onuSerials.find(s => s.serialNumber === form.onuSerial)?.macAddress === form.macAddress && (
+                      <span className="text-xs text-emerald-600">Auto-filled from inventory</span>
+                    )}
+                  </div>
                   <input className={inputCls} placeholder="e.g. AA:BB:CC:DD:EE:FF" value={form.macAddress} onChange={set('macAddress')} />
                 </div>
               </div>
@@ -546,7 +577,6 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
               {/* ── Material Usage (edit only) ───────────────────────── */}
               {isEdit && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-4">
-                  {/* Section header with inline action button */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Package size={14} className="text-slate-400" />
@@ -560,15 +590,15 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
                     >
                       {isSubmittingMaterials
                         ? <><LoaderCircle size={12} className="animate-spin" /> Saving...</>
-                        : <><Package size={12} /> {localSubmittedAt ? 'Update Materials' : 'Submit Materials'}</>}
+                        : <><Package size={12} /> {localMaterialUsages.length > 0 ? 'Update Materials' : 'Submit Materials'}</>}
                     </button>
                   </div>
 
-                  {localSubmittedAt && (
+                  {localMaterialUsages.length > 0 && (
                     <div className="flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
                       <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
                       <p className="text-xs text-emerald-700">
-                        Submitted on {new Date(localSubmittedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        Submitted on {new Date(localMaterialUsages[0].createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
                   )}
@@ -584,34 +614,47 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: 'Drop Cable (m)',     key: 'dropCable',   placeholder: 'e.g. 45.5', step: '0.1' },
-                      { label: 'SC Connector (qty)', key: 'scConnector', placeholder: 'e.g. 2' },
-                      { label: 'Cable Ties (qty)',   key: 'cableTies',   placeholder: 'e.g. 10' },
-                      { label: 'Clamps (qty)',        key: 'clamps',      placeholder: 'e.g. 4' },
-                      { label: 'Patch Cord (qty)',   key: 'patchCord',   placeholder: 'e.g. 1' },
-                    ].map(({ label, key, placeholder, step }) => {
-                      const hasError = matErrors.includes(label.replace(' (m)', '').replace(' (qty)', ''));
-                      return (
-                        <div key={key}>
-                          <label className={`block text-xs font-medium mb-1 ${hasError ? 'text-red-600' : 'text-slate-600'}`}>
-                            {label}
-                          </label>
-                          <input
-                            type="number" min="0" step={step ?? '1'}
-                            placeholder={placeholder}
-                            className={`${inputCls} ${hasError ? 'border-red-400 focus:ring-red-400' : ''}`}
-                            value={matForm[key as keyof typeof matForm]}
-                            onChange={e => {
-                              setMatErrors([]);
-                              setMatForm(f => ({ ...f, [key]: e.target.value }));
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {!inventoryLoaded ? (
+                    <p className="text-xs text-slate-400">Loading inventory...</p>
+                  ) : consumableItems.length === 0 ? (
+                    <p className="text-sm text-slate-400">No consumable items in inventory. Add items in the Inventory module first.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {consumableItems.map(item => {
+                        const isRequired = ['Drop Cable', 'SC Connector'].includes(item.category.name);
+                        const qty = matUsages[item.id] ?? '';
+                        const entered = parseFloat(qty || '0');
+                        const isOverStock = item.quantity >= 0 && entered > item.quantity;
+                        return (
+                          <div key={item.id}>
+                            <div className="flex items-baseline justify-between mb-1">
+                              <label className="flex items-center gap-1 text-xs font-medium text-slate-600">
+                                {item.name}
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">
+                                  {item.category.name}
+                                </span>
+                                <span className="text-slate-400">({item.unit})</span>
+                                {isRequired && <span className="text-red-500">*</span>}
+                              </label>
+                              <span className={`text-xs ${isOverStock ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                                {isOverStock ? `⚠ only ${item.quantity} avail.` : `${item.quantity} in stock`}
+                              </span>
+                            </div>
+                            <input
+                              type="number" min="0" step="0.01"
+                              placeholder="0"
+                              className={`${inputCls} ${isOverStock ? 'border-red-400 focus:ring-red-400' : ''}`}
+                              value={qty}
+                              onChange={e => {
+                                setMatErrors([]);
+                                setMatUsages(prev => ({ ...prev, [item.id]: e.target.value }));
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 

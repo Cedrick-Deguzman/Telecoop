@@ -9,6 +9,14 @@ export async function GET() {
         technician: { select: { id: true, name: true } },
         napbox: { select: { id: true, name: true } },
         materials: true,
+        materialUsages: {
+          include: {
+            inventoryItem: {
+              select: { id: true, name: true, unit: true, category: { select: { name: true } } },
+            },
+          },
+          orderBy: { inventoryItem: { name: 'asc' } },
+        },
         photos: { orderBy: { createdAt: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
@@ -62,6 +70,14 @@ export async function POST(req: NextRequest) {
         technician: { select: { id: true, name: true } },
         napbox: { select: { id: true, name: true } },
         materials: true,
+        materialUsages: {
+          include: {
+            inventoryItem: {
+              select: { id: true, name: true, unit: true, category: { select: { name: true } } },
+            },
+          },
+          orderBy: { inventoryItem: { name: 'asc' } },
+        },
         photos: { orderBy: { createdAt: 'asc' } },
       },
     });

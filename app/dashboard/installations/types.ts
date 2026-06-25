@@ -23,6 +23,20 @@ export interface InstallationPhoto {
   createdAt: string;
 }
 
+export interface InstallationMaterialUsage {
+  id: number;
+  inventoryItemId: number;
+  inventoryItem: {
+    id: number;
+    name: string;
+    unit: string;
+    category: { name: string };
+  };
+  quantity: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Installation {
   id: number;
   prospectName: string | null;
@@ -60,6 +74,7 @@ export interface Installation {
 
   // Material usage
   materials: InstallationMaterial | null;
+  materialUsages: InstallationMaterialUsage[];
 
   // Photos
   photos: InstallationPhoto[];
