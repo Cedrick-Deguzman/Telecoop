@@ -51,8 +51,8 @@ export default function EditItemModal({ item, onClose, onSuccess }: Props) {
   return (
     <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Edit Item</h2>
             <p className="text-sm text-slate-500">{item.category.name}</p>

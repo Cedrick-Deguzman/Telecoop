@@ -3,6 +3,7 @@ import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { useState, useEffect, type FormEvent } from 'react';
 import { X, LoaderCircle, CheckCircle2, Package, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Installation, InstallationStatus, InstallationMaterialUsage, TechnicianOption, NapboxOption, InstallationPhoto, PHOTO_CATEGORIES } from '../types';
+import { compressImage } from '@/lib/compressImage';
 
 interface Props {
   installation: Installation | null;
@@ -225,11 +226,14 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
             const allUploaded = await Promise.all(
               stagedEntries.flatMap(([category, state]) =>
                 state.staged.map(async ({ file, caption }) => {
+                  const compressed = await compressImage(file);
                   const fd = new FormData();
-                  fd.append('file', file);
+                  fd.append('file', compressed);
+                  fd.append('recordType', 'installation');
+                  fd.append('recordId', String(installation.id));
                   fd.append('category', category);
                   fd.append('caption', caption);
-                  const res = await fetch(`/api/installations/${installation.id}/photos`, { method: 'POST', body: fd });
+                  const res = await fetch('/api/photos', { method: 'POST', body: fd });
                   if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Photo upload failed'); }
                   return res.json() as Promise<InstallationPhoto>;
                 })
@@ -378,7 +382,7 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
     if (!installation?.id) return;
     setPhotoError(null);
     try {
-      const res = await fetch(`/api/installations/${installation.id}/photos/${photoId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/photos/${photoId}`, { method: 'DELETE' });
       if (!res.ok) { setPhotoError('Failed to delete photo.'); return; }
       setLocalPhotos(prev => prev.filter(p => p.id !== photoId));
     } catch { setPhotoError('Something went wrong. Please try again.'); }

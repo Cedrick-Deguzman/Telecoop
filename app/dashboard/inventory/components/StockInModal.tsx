@@ -1,9 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
 import type { InventoryItem } from '../types';
 import { ModalPortal } from '@/app/components/ui/ModalPortal';
+import { compressImage } from '@/lib/compressImage';
+
+// Photos staged at stock-in default to this category (the proof shot).
+// Operators can add other-category photos later from each unit's photo panel.
+const STOCK_IN_PHOTO_CATEGORY = 'Serial Label';
+
+type StagedPhoto = { file: File; preview: string };
 
 interface Props {
   item: InventoryItem;
@@ -16,6 +23,7 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
   const [quantity, setQuantity] = useState('');
   const [serialNumbers, setSerialNumbers] = useState<string[]>(['']);
   const [macAddresses, setMacAddresses] = useState<string[]>(['']);
+  const [photos, setPhotos] = useState<StagedPhoto[][]>([[]]);
   const [notes, setNotes] = useState('');
   const [performedBy, setPerformedBy] = useState('');
   const [saving, setSaving] = useState(false);
@@ -24,8 +32,13 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
   const addSerial = () => {
     setSerialNumbers(prev => [...prev, '']);
     setMacAddresses(prev => [...prev, '']);
+    setPhotos(prev => [...prev, []]);
   };
   const removeSerial = (i: number) => {
+    setPhotos(prev => {
+      prev[i]?.forEach(p => URL.revokeObjectURL(p.preview));
+      return prev.filter((_, idx) => idx !== i);
+    });
     setSerialNumbers(prev => prev.filter((_, idx) => idx !== i));
     setMacAddresses(prev => prev.filter((_, idx) => idx !== i));
   };
@@ -33,6 +46,18 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
     setSerialNumbers(prev => prev.map((s, idx) => (idx === i ? val : s)));
   const updateMac = (i: number, val: string) =>
     setMacAddresses(prev => prev.map((m, idx) => (idx === i ? val : m)));
+
+  const addPhotos = (i: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const staged = Array.from(files).map(file => ({ file, preview: URL.createObjectURL(file) }));
+    setPhotos(prev => prev.map((p, idx) => (idx === i ? [...p, ...staged] : p)));
+  };
+  const removePhoto = (i: number, photoIdx: number) =>
+    setPhotos(prev => prev.map((p, idx) => {
+      if (idx !== i) return p;
+      URL.revokeObjectURL(p[photoIdx].preview);
+      return p.filter((_, pi) => pi !== photoIdx);
+    }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +75,36 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed'); return; }
+
+      // Units now exist — attach each row's staged photos to its serial.
+      // Best-effort: a failed photo upload won't undo the stock-in (re-addable from the unit panel).
+      if (isSerialized && Array.isArray(data.serials) && data.serials.length > 0) {
+        const idBySerial: Record<string, number> = {};
+        for (const s of data.serials as { id: number; serialNumber: string }[]) idBySerial[s.serialNumber] = s.id;
+
+        const uploads: Promise<unknown>[] = [];
+        serialNumbers.forEach((rawSn, i) => {
+          const sn = rawSn.trim();
+          const serialId = idBySerial[sn];
+          if (!sn || !serialId) return;
+          for (const { file } of photos[i] ?? []) {
+            uploads.push((async () => {
+              try {
+                const compressed = await compressImage(file);
+                const fd = new FormData();
+                fd.append('file', compressed);
+                fd.append('recordType', 'inventorySerial');
+                fd.append('recordId', String(serialId));
+                fd.append('category', STOCK_IN_PHOTO_CATEGORY);
+                await fetch('/api/photos', { method: 'POST', body: fd });
+              } catch { /* swallow — unit is already created */ }
+            })());
+          }
+        });
+        if (uploads.length > 0) await Promise.all(uploads);
+        photos.flat().forEach(p => URL.revokeObjectURL(p.preview));
+      }
+
       onSuccess();
       onClose();
     } catch {
@@ -62,8 +117,8 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
   return (
     <ModalPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Stock In</h2>
             <p className="text-sm text-slate-500">{item.name} · {item.category.name}</p>
@@ -77,6 +132,7 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
           {isSerialized ? (
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Serial Numbers</label>
+              <p className="text-xs text-slate-400">Photos added here save as “{STOCK_IN_PHOTO_CATEGORY}”. You can add more, categorized, from each unit later.</p>
               {serialNumbers.map((sn, i) => (
                 <div key={i} className="space-y-1.5">
                   <div className="flex gap-2">
@@ -98,6 +154,32 @@ export default function StockInModal({ item, onClose, onSuccess }: Props) {
                     value={macAddresses[i] ?? ''}
                     onChange={e => updateMac(i, e.target.value)}
                   />
+
+                  {/* Per-unit photos (uploaded after the unit is created) */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(photos[i] ?? []).map((p, pi) => (
+                      <div key={pi} className="relative">
+                        <img src={p.preview} alt="" className="h-12 w-12 rounded-lg border border-slate-200 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i, pi)}
+                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
+                        >
+                          <X size={9} />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                      <ImageIcon size={12} /> Add Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={e => { addPhotos(i, e.target.files); e.target.value = ''; }}
+                      />
+                    </label>
+                  </div>
                 </div>
               ))}
               <button

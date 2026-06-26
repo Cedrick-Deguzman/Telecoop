@@ -89,7 +89,7 @@ export function InstallationsTable({ installations, onView, onEdit, onConvert }:
                   </span>
                 </td>
                 <td className="px-5 py-4">
-                  {i.materials?.submittedAt ? (
+                  {(i.materialUsages?.length ?? 0) > 0 ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                       <CheckCircle2 size={11} /> Submitted
                     </span>

@@ -8,7 +8,6 @@ export async function GET() {
         client: { select: { id: true, name: true } },
         technician: { select: { id: true, name: true } },
         napbox: { select: { id: true, name: true } },
-        materials: true,
         materialUsages: {
           include: {
             inventoryItem: {
@@ -69,7 +68,6 @@ export async function POST(req: NextRequest) {
         client: { select: { id: true, name: true } },
         technician: { select: { id: true, name: true } },
         napbox: { select: { id: true, name: true } },
-        materials: true,
         materialUsages: {
           include: {
             inventoryItem: {

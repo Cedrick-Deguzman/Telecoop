@@ -58,7 +58,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         })),
       });
 
-      return NextResponse.json({ added: serials.length });
+      return NextResponse.json({
+        added: serials.length,
+        serials: serials.map(s => ({ id: s.id, serialNumber: s.serialNumber })),
+      });
     } else {
       if (!quantity || Number(quantity) <= 0) {
         return NextResponse.json({ error: 'Quantity must be greater than 0' }, { status: 400 });

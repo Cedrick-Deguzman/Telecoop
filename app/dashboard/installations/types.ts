@@ -1,17 +1,11 @@
+import { PHOTO_RULES } from '@/lib/photoConfig';
+
 export type InstallationStatus = 'pending' | 'assigned' | 'ongoing' | 'completed' | 'cancelled';
 
-export const PHOTO_CATEGORIES = [
-  'House Exterior',
-  'Pole Route',
-  'NAP Box',
-  'Port Used',
-  'ONU Serial',
-  'Router Installed',
-  'Speed Test',
-  'Final Cable Routing',
-] as const;
+// Single source of truth lives in lib/photoConfig.ts.
+export const PHOTO_CATEGORIES = PHOTO_RULES.installation.categories;
 
-export type PhotoCategory = typeof PHOTO_CATEGORIES[number];
+export type PhotoCategory = (typeof PHOTO_CATEGORIES)[number];
 
 export interface InstallationPhoto {
   id: number;
@@ -73,7 +67,6 @@ export interface Installation {
   longitude: number | null;
 
   // Material usage
-  materials: InstallationMaterial | null;
   materialUsages: InstallationMaterialUsage[];
 
   // Photos
@@ -81,16 +74,6 @@ export interface Installation {
 
   createdAt: string;
   updatedAt: string;
-}
-
-export interface InstallationMaterial {
-  id: number;
-  dropCable: number | null;
-  scConnector: number | null;
-  cableTies: number | null;
-  clamps: number | null;
-  patchCord: number | null;
-  submittedAt: string | null;
 }
 
 export interface TechnicianOption {

@@ -20,8 +20,18 @@ export interface InventorySerial {
   status: InventorySerialStatus;
   installationId: number | null;
   installation: { id: number; prospectName: string | null; client: { name: string } | null } | null;
+  photos?: InventoryPhoto[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface InventoryPhoto {
+  id: number;
+  url: string;
+  publicId: string;
+  category: string;
+  caption: string | null;
+  createdAt: string;
 }
 
 export interface InventoryItem {
@@ -35,6 +45,7 @@ export interface InventoryItem {
   createdAt: string;
   updatedAt: string;
   serials: InventorySerial[];
+  photos?: InventoryPhoto[];
   _count?: { serials: number };
 }
 

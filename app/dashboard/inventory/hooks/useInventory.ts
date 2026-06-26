@@ -38,9 +38,16 @@ export function useInventory() {
   }, []);
 
   const filteredItems = items.filter(item => {
+    const q = search.toLowerCase().trim();
     const matchSearch =
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.category.name.toLowerCase().includes(search.toLowerCase());
+      q === '' ||
+      item.name.toLowerCase().includes(q) ||
+      item.category.name.toLowerCase().includes(q) ||
+      (item.serials ?? []).some(
+        s =>
+          s.serialNumber.toLowerCase().includes(q) ||
+          (s.macAddress?.toLowerCase().includes(q) ?? false),
+      );
     const matchType = typeFilter === 'all' || item.category.type === typeFilter;
     return matchSearch && matchType;
   });

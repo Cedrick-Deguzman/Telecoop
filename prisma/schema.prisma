@@ -235,9 +235,8 @@ model Installation {
   latitude        Float?
   longitude       Float?
 
-  materials             InstallationMaterial?
   materialUsages        InstallationMaterialUsage[]
-  photos                InstallationPhoto[]
+  photos                Photo[]
   inventorySerials      InventorySerial[]
   inventoryTransactions InventoryTransaction[]
 
@@ -247,34 +246,28 @@ model Installation {
   @@map("installation")
 }
 
-model InstallationPhoto {
-  id             Int          @id @default(autoincrement())
-  installationId Int
-  installation   Installation @relation(fields: [installationId], references: [id], onDelete: Cascade)
-  url            String
-  publicId       String
-  category       String
-  caption        String?
-  createdAt      DateTime     @default(now())
+// Generic photo evidence — links to any operational record (installation, inventory, ...)
+model Photo {
+  id              Int            @id @default(autoincrement())
+  category        String
+  url             String
+  publicId        String
+  caption         String?
+  createdAt       DateTime       @default(now())
+
+  installationId    Int?
+  installation      Installation?    @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  inventoryItemId   Int?
+  inventoryItem     InventoryItem?   @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  inventorySerialId Int?
+  inventorySerial   InventorySerial? @relation(fields: [inventorySerialId], references: [id], onDelete: Cascade)
 
   @@index([installationId])
-  @@map("installationphoto")
-}
-
-model InstallationMaterial {
-  id             Int          @id @default(autoincrement())
-  installationId Int          @unique
-  installation   Installation @relation(fields: [installationId], references: [id])
-  dropCable      Float?
-  scConnector    Int?
-  cableTies      Int?
-  clamps         Int?
-  patchCord      Int?
-  submittedAt    DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  @@map("installationmaterial")
+  @@index([inventoryItemId])
+  @@index([inventorySerialId])
+  @@map("photo")
 }
 
 model InventoryCategory {
@@ -301,6 +294,7 @@ model InventoryItem {
   serials           InventorySerial[]
   transactions      InventoryTransaction[]
   materialUsages    InstallationMaterialUsage[]
+  photos            Photo[]
 
   @@map("inventoryitem")
 }
@@ -317,6 +311,7 @@ model InventorySerial {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
   transactions   InventoryTransaction[]
+  photos         Photo[]
 
   @@map("inventoryserial")
 }

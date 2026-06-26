@@ -1,7 +1,9 @@
 'use client';
+import { useState } from 'react';
 import { ModalPortal } from '@/app/components/ui/ModalPortal';
 import { X, User, Calendar, MapPin, CheckCircle2, Package, ExternalLink, Phone, Image } from 'lucide-react';
 import { Installation, PHOTO_CATEGORIES } from '../types';
+import PhotoLightbox, { type LightboxPhoto } from '@/app/components/PhotoLightbox';
 
 const STATUS_BADGE: Record<string, string> = {
   pending:   'bg-amber-100 text-amber-700',
@@ -50,6 +52,7 @@ export function ViewInstallationModal({ installation: i, onClose, onEdit }: Prop
   const mapsUrl = i.latitude && i.longitude
     ? `https://www.google.com/maps?q=${i.latitude},${i.longitude}`
     : null;
+  const [viewer, setViewer] = useState<{ photos: LightboxPhoto[]; index: number } | null>(null);
 
   return (
     <ModalPortal>
@@ -145,18 +148,20 @@ export function ViewInstallationModal({ installation: i, onClose, onEdit }: Prop
 
               {/* ── Material Usage ── */}
               <SectionHeader title="Material Usage" />
-              {i.materials ? (
+              {i.materialUsages && i.materialUsages.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <Field label="Drop Cable (m)"    value={i.materials.dropCable} />
-                    <Field label="SC Connector"      value={i.materials.scConnector} />
-                    <Field label="Cable Ties"        value={i.materials.cableTies} />
-                    <Field label="Clamps"            value={i.materials.clamps} />
-                    <Field label="Patch Cord"        value={i.materials.patchCord} />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {i.materialUsages.map(u => (
+                      <Field
+                        key={u.id}
+                        label={`${u.inventoryItem.name} (${u.inventoryItem.unit})`}
+                        value={u.quantity}
+                      />
+                    ))}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-emerald-700">
                     <CheckCircle2 size={12} />
-                    Submitted on {fmt(i.materials.submittedAt)}
+                    Submitted on {fmt(i.materialUsages[0].createdAt)}
                   </div>
                 </div>
               ) : (
@@ -180,15 +185,15 @@ export function ViewInstallationModal({ installation: i, onClose, onEdit }: Prop
                       </div>
                       {photos.length > 0 ? (
                         <div className="grid grid-cols-3 gap-1.5">
-                          {photos.map(photo => (
+                          {photos.map((photo, idx) => (
                             <div key={photo.id}>
-                              <a href={photo.url} target="_blank" rel="noopener noreferrer">
+                              <button type="button" onClick={() => setViewer({ photos, index: idx })} className="block w-full">
                                 <img
                                   src={photo.url}
                                   alt={photo.caption || category}
                                   className="w-full aspect-square object-cover rounded-lg hover:opacity-90 transition-opacity"
                                 />
-                              </a>
+                              </button>
                               {photo.caption && (
                                 <p className="text-xs text-slate-400 mt-1 truncate" title={photo.caption}>{photo.caption}</p>
                               )}
@@ -221,6 +226,16 @@ export function ViewInstallationModal({ installation: i, onClose, onEdit }: Prop
           </div>
         </div>
       </div>
+
+      {viewer && (
+        <PhotoLightbox
+          photos={viewer.photos}
+          index={viewer.index}
+          onIndexChange={idx => setViewer(v => (v ? { ...v, index: idx } : v))}
+          onClose={() => setViewer(null)}
+          title={i.prospectName ?? undefined}
+        />
+      )}
     </ModalPortal>
   );
 }

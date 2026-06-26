@@ -9,9 +9,11 @@ const ITEM_INCLUDE = {
       installation: {
         select: { id: true, prospectName: true, client: { select: { name: true } } },
       },
+      photos: { orderBy: { createdAt: 'asc' as const } },
     },
   },
   _count: { select: { serials: true } },
+  photos: { orderBy: { createdAt: 'asc' as const } },
 };
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

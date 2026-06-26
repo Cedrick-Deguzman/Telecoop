@@ -139,7 +139,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         client: { select: { id: true, name: true } },
         technician: { select: { id: true, name: true } },
         napbox: { select: { id: true, name: true } },
-        materials: true,
         materialUsages: MATERIAL_USAGE_INCLUDE,
         photos: { orderBy: { createdAt: 'asc' } },
       },
