@@ -446,7 +446,7 @@ export function AddEditInstallationModal({ installation, technicians, napboxes, 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Scheduled Date</label>
-                  <input type="date" className={inputCls} value={form.scheduledDate} min={new Date().toISOString().slice(0, 10)} onChange={set('scheduledDate')} />
+                  <input type="date" className={inputCls} value={form.scheduledDate} onChange={set('scheduledDate')} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Completed Date</label>

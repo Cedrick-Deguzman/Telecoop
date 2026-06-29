@@ -42,6 +42,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prospect name is required' }, { status: 400 });
     }
 
+    // A new job has no photos yet — it can't be created already completed (proof gate).
+    if (status === 'completed') {
+      return NextResponse.json(
+        { error: 'Create the job first, upload the required photos, then mark it completed.' },
+        { status: 400 },
+      );
+    }
+
     const installation = await prisma.installation.create({
       data: {
         prospectName: prospectName.trim(),

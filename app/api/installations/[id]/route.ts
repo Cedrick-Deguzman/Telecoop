@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { missingRequiredCategories } from '@/lib/photoConfig';
 
 const MATERIAL_USAGE_INCLUDE = {
   include: {
@@ -109,6 +110,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id: installationId },
       select: { status: true, onuSerial: true, routerSerial: true },
     });
+
+    // Proof gate: a job cannot be marked completed without its required photos.
+    // Enforced server-side so the rule holds even if the UI is bypassed.
+    if (status === 'completed') {
+      const photos = await prisma.photo.findMany({
+        where: { installationId },
+        select: { category: true },
+      });
+      const missing = missingRequiredCategories('installation', photos.map(p => p.category));
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: `Cannot complete: missing required photos for ${missing.join(', ')}.` },
+          { status: 400 },
+        );
+      }
+    }
 
     const installation = await prisma.installation.update({
       where: { id: installationId },
